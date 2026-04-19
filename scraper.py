@@ -5,6 +5,10 @@ Scrapes downloaded competition result HTML pages from firesport.eu and writes
 a CSV with columns:
     attack_date, league, place, placement, attack_type, category, team, lp, pp
 
+The attack_type (2B or 3B) is determined by a category_config.json file instead
+of being scraped from the HTML pages. This provides a single source of truth for
+category-to-attack-type mappings.
+
 Usage:
     python3 scraper.py <league> <input_dir> -o <output_file>
 
@@ -15,6 +19,7 @@ Example:
 
 import argparse
 import csv
+import json
 import re
 import sys
 from pathlib import Path
@@ -23,6 +28,9 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 
 # Result values that should produce an empty lp/pp field
 _INVALID_TIME_STRS = frozenset({'NP', 'DSQ', 'MS', '-'})
+
+# Configuration file for category → attack_type mappings
+_CONFIG_FILE = 'category_config.json'
 
 
 def parse_time(value: str) -> str:
@@ -92,16 +100,73 @@ def extract_team(td_team: Tag, td_district: Tag) -> str:
     return team
 
 
-def get_attack_type(h3_text: str) -> str:
-    """Extract '3B' or '2B' from h3 text like '... 3xB úzké'."""
-    m = re.search(r'(\d)xB', h3_text)
-    return f'{m.group(1)}B' if m else ''
+def load_category_config(config_path: Path) -> dict:
+    """Load category-to-attack_type mapping from JSON config file.
+    
+    Returns a dict mapping category names to attack types ('2B' or '3B').
+    Raises FileNotFoundError if config file doesn't exist.
+    """
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"Config file not found: {config_path}\n"
+            "Please create category_config.json with category-to-attack_type mappings.\n"
+            "Example:\n"
+            '{"Muži": "3B", "Ženy": "2B", "Junioři": "3B", ...}'
+        )
+    with open(config_path, encoding='utf-8') as f:
+        return json.load(f)
 
 
 def get_category(h3_text: str) -> str:
     """Return the first word of the category h3 (e.g. 'Muži', 'Ženy')."""
     words = h3_text.strip().split()
     return words[0] if words else ''
+
+
+def get_attack_type_from_config(
+    category: str,
+    config: dict,
+    html_path: Path,
+) -> str:
+    """Get attack type from config for the given category.
+    
+    If category is not in config, prompts user to add it or exits with error.
+    The config file is updated with the new category if user provides a valid type.
+    """
+    if category in config:
+        return config[category]
+    
+    # Category not found - ask user
+    print(
+        f"\nError: Category '{category}' not found in {_CONFIG_FILE}",
+        file=sys.stderr,
+    )
+    print(f"From file: {html_path.name}", file=sys.stderr)
+    print("", file=sys.stderr)
+    
+    while True:
+        user_input = input(
+            f"Enter attack type for category '{category}' (2B or 3B), "
+            f"or 'skip' to stop: "
+        ).strip().upper()
+        
+        if user_input == 'SKIP':
+            print("Stopping due to unknown category.", file=sys.stderr)
+            sys.exit(1)
+        
+        if user_input in ('2B', '3B'):
+            # Update config in memory and save to file
+            config[category] = user_input
+            config_path = Path(_CONFIG_FILE)
+            with open(config_path, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            print(
+                f"✓ Added '{category}': '{user_input}' to {_CONFIG_FILE}",
+                file=sys.stderr,
+            )
+            return user_input
+        else:
+            print("ERROR: Please enter '2B' or '3B'.", file=sys.stderr)
 
 
 def parse_rows(
@@ -149,8 +214,14 @@ def parse_rows(
     return rows
 
 
-def scrape_file(html_path: Path, league: str) -> list:
-    """Parse one HTML file and return all extracted result rows."""
+def scrape_file(html_path: Path, league: str, config: dict) -> list:
+    """Parse one HTML file and return all extracted result rows.
+    
+    Args:
+        html_path: Path to the HTML file to scrape
+        league: League identifier (e.g. 'ZL', 'EXCR')
+        config: Category-to-attack_type mapping loaded from category_config.json
+    """
     with open(html_path, encoding='utf-8', errors='replace') as f:
         html = f.read()
     soup = BeautifulSoup(html, 'html.parser')
@@ -198,7 +269,7 @@ def scrape_file(html_path: Path, league: str) -> list:
         for h3, table in zip(cat_h3s, data_tables):
             h3_text = h3.get_text(strip=True)
             category = get_category(h3_text)
-            attack_type = get_attack_type(h3_text)
+            attack_type = get_attack_type_from_config(category, config, html_path)
             rows = parse_rows(table, attack_date, league, place, attack_type, category)
             all_rows.extend(rows)
 
@@ -224,6 +295,14 @@ def main() -> None:
         print(f'No HTML files found in {args.input_dir!r}', file=sys.stderr)
         sys.exit(1)
 
+    # Load category configuration
+    config_path = Path(_CONFIG_FILE)
+    try:
+        config = load_category_config(config_path)
+    except FileNotFoundError as e:
+        print(f'Error: {e}', file=sys.stderr)
+        sys.exit(1)
+
     fieldnames = [
         'attack_date', 'league', 'place', 'placement',
         'attack_type', 'category', 'team', 'lp', 'pp',
@@ -235,7 +314,7 @@ def main() -> None:
         writer.writeheader()
 
         for html_path in html_files:
-            rows = scrape_file(html_path, args.league)
+            rows = scrape_file(html_path, args.league, config)
             writer.writerows(rows)
             total_rows += len(rows)
             print(f'  {html_path.name}: {len(rows)} rows')
