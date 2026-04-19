@@ -1,15 +1,16 @@
 {
   "categories": {
-    "Muži": "3B",
-    "Ženy": "2B",
-    "Junioři": "3B",
-    "Juniorky": "2B",
-    "Dorostenci": "2B",
-    "Muži>35": "2B"
+    "Muži": "auto",
+    "Ženy": "auto",
+    "Junioři": "auto",
+    "Juniorky": "auto",
+    "Dorostenci": "auto",
+    "Muži>35": "auto"
   },
   "leagues": {
     "zl": {
       "display_name": "ŽL",
+      "full_league_name": "Žďárská liga",
       "start_year": 2012,
       "active": true,
       "pending_competitions": [
@@ -25,10 +26,15 @@
         {"date": "2026-09-13", "place": "Jabloňov"},
         {"date": "2026-09-19", "place": "Hamry nad Sázavou"}
       ],
-      "last_schedule_check": "2026-04-19"
+      "last_schedule_check": "2026-04-19",
+      "categories": {
+        "Muži": "3B",
+        "Ženy": "2B"
+      }
     },
     "excr": {
       "display_name": "EXČR",
+      "full_league_name": "Extraliga ČR",
       "start_year": 1996,
       "active": true,
       "pending_competitions": [],
@@ -36,6 +42,7 @@
     },
     "vcbl": {
       "display_name": "VCB",
+      "full_league_name": "Velká cena Blanenska v PÚ",
       "start_year": 2002,
       "active": true,
       "pending_competitions": [],
@@ -43,6 +50,7 @@
     },
     "plpu": {
       "display_name": "PLPU",
+      "full_league_name": "Fire night cup",
       "start_year": 2013,
       "active": true,
       "pending_competitions": [],
@@ -50,6 +58,14 @@
       "categories": {
         "Muži": "auto"
       }
+    },
+    "fnc": {
+      "display_name": "FNC",
+      "full_league_name": "Fire night cup",
+      "start_year": 2013,
+      "active": false,
+      "pending_competitions": [],
+      "last_schedule_check": null
     }
   }
 }

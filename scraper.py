@@ -182,7 +182,19 @@ def resolve_attack_type(
 
     # 2. Global default
     if category in global_categories:
-        return global_categories[category]
+        global_val = global_categories[category]
+        if global_val == 'auto':
+            attack_type = parse_attack_type_from_h3(h3_text)
+            if attack_type:
+                return attack_type
+            print(
+                f"Warning: global 'auto' for '{category}' but no NxB "
+                f"pattern found in heading: {h3_text!r}  ({source_name})",
+                file=sys.stderr,
+            )
+            # fall through to tier 3
+        else:
+            return global_val
 
     # 3. Not found anywhere
     if not interactive:
@@ -221,6 +233,7 @@ def parse_rows(
     place: str,
     attack_type: str,
     category: str,
+    full_league_name: str = '',
 ) -> list:
     """Extract result rows from a data table element."""
     rows = []
@@ -261,6 +274,7 @@ def parse_rows(
             rows.append({
                 'attack_date': attack_date,
                 'league': league,
+                'full_league_name': full_league_name,
                 'place': place,
                 'placement': placement_raw,
                 'attack_type': attack_type,
@@ -281,6 +295,7 @@ def scrape_html(
     league_categories: dict,
     interactive: bool = False,
     full_config: dict | None = None,
+    full_league_name: str = '',
 ) -> list:
     """Parse HTML content string and return all extracted result rows.
 
@@ -295,6 +310,7 @@ def scrape_html(
         league_categories: Per-league overrides (may contain 'auto').
         interactive:       Prompt for unknown categories when True, else skip.
         full_config:       Full config dict for persisting new categories.
+        full_league_name:  Full human-readable league name for the DB column.
     """
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -352,7 +368,7 @@ def scrape_html(
             )
             if attack_type is None:
                 continue  # unknown category in automated mode — skip rows
-            rows = parse_rows(table, attack_date, league_display, place, attack_type, category)
+            rows = parse_rows(table, attack_date, league_display, place, attack_type, category, full_league_name)
             all_rows.extend(rows)
 
     return all_rows

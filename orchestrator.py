@@ -87,6 +87,7 @@ def _process_year(
     Returns the number of rows uploaded (0 if nothing new).
     """
     display = league_cfg['display_name']
+    full_league_name = league_cfg.get('full_league_name', '')
 
     try:
         html = downloader.download_html(league_key, year)
@@ -102,6 +103,7 @@ def _process_year(
         global_categories,
         league_categories,
         interactive=False,
+        full_league_name=full_league_name,
     )
 
     if not rows:
@@ -183,6 +185,37 @@ def _refresh_schedule(
         print(f'  [{display} {year}] Schedule refresh: no new competitions found')
 
     return True
+
+
+def _check_attack_type_conflicts(
+    new_rows: list[dict],
+    year: int,
+    seen: dict[str, set[str]],
+    display: str,
+) -> list[str]:
+    """Return a list of human-readable conflict messages, empty if none.
+
+    Compares the attack_types in new_rows against the seen map which holds
+    all types already accepted (from the DB or earlier years in this run).
+    Also checks for internal conflicts within new_rows itself.
+    """
+    # Build per-category attack types seen in this year's scraped rows
+    year_types: dict[str, set[str]] = {}
+    for row in new_rows:
+        cat = row['category']
+        at = row['attack_type']
+        year_types.setdefault(cat, set()).add(at)
+
+    conflicts = []
+    for cat, types_this_year in year_types.items():
+        combined = types_this_year | seen.get(cat, set())
+        if len(combined) > 1:
+            prior = seen.get(cat, set())
+            conflicts.append(
+                f"  Category '{cat}': found {sorted(types_this_year)} in "
+                f"{year}, but prior data has {sorted(prior) if prior else 'none'}"
+            )
+    return conflicts
 
 
 # ── Daily mode ────────────────────────────────────────────────────────────────
@@ -289,8 +322,6 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
     total_uploaded = 0
 
     for league_key, league_cfg in leagues.items():
-        if not league_cfg.get('active', False):
-            continue
         if only_league and league_key != only_league:
             continue
 
@@ -298,13 +329,74 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
         start_year = league_cfg.get('start_year', today.year)
         print(f'\n[{display}] Backfilling {start_year}–{today.year} …')
 
+        # Seed seen map from whatever is already in the DB for this league
+        seen: dict[str, set[str]] = db.get_category_attack_types(client, display)
+        conflict_found = False
+
         for year in range(start_year, today.year + 1):
-            n = _process_year(
-                client, league_key, league_cfg, global_categories, year,
+            if conflict_found:
+                break
+
+            # Scrape the year without uploading yet so we can validate first
+            try:
+                html = downloader.download_html(league_key, year)
+            except Exception as exc:
+                print(f'  [{display} {year}] Download failed: {exc}', file=sys.stderr)
+                continue
+
+            league_categories = league_cfg.get('categories', {})
+            full_league_name = league_cfg.get('full_league_name', '')
+            rows = scraper.scrape_html(
+                html,
+                f'{league_key.upper()}.{year}.html',
+                display,
+                global_categories,
+                league_categories,
+                interactive=False,
+                full_league_name=full_league_name,
             )
-            total_uploaded += n
-            if n == 0:
+
+            if not rows:
                 print(f'  [{display} {year}] No new rows')
+                continue
+
+            existing = db.get_existing_competitions(client, display, year)
+            new_rows = [r for r in rows if (r['attack_date'], r['place']) not in existing]
+
+            if not new_rows:
+                print(f'  [{display} {year}] No new rows')
+                continue
+
+            conflicts = _check_attack_type_conflicts(new_rows, year, seen, display)
+            if conflicts:
+                print(
+                    f'\n[{display}] CONFLICT detected in {year} — aborting entire league backfill.'
+                )
+                print('  Conflicting categories:')
+                for msg in conflicts:
+                    print(msg)
+                deleted = db.delete_league_records(client, display)
+                print(
+                    f'  Deleted {deleted} existing row(s) for {display} from the DB.\n'
+                    f'  Fix the config.json category overrides for [{league_key}]\n'
+                    f'  then re-run:  python orchestrator.py --backfill --league {league_key}'
+                )
+                conflict_found = True
+                break
+
+            uploaded = db.upload_records(client, new_rows)
+            total_uploaded += uploaded
+
+            # Update seen with this year's newly confirmed types
+            for row in new_rows:
+                seen.setdefault(row['category'], set()).add(row['attack_type'])
+
+            comps: dict[tuple[str, str], int] = {}
+            for r in new_rows:
+                key = (r['attack_date'], r['place'])
+                comps[key] = comps.get(key, 0) + 1
+            for (d, p), cnt in sorted(comps.items()):
+                print(f'  [{display} {year}] + {d} {p} ({cnt} rows)')
 
     print(f'\nBackfill complete. Total rows uploaded: {total_uploaded}')
 

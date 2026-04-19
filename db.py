@@ -4,19 +4,16 @@
 Expected schema for public.timestamps:
     attack_date      text     YYYY-MM-DD
     league           text     display name (ŽL, EXČR, VCB, ...)
+    full_league_name text     full human-readable name (Žďárská liga, ...)
     place            text
     placement        text
     attack_type      text     '2B' or '3B'
     category         text
     team             text
-    lp               text     nullable — first individual attempt time
-    pp               text     nullable — second individual attempt time
+    lp               real     nullable — first individual attempt time
+    pp               real     nullable — second individual attempt time
     only_final_time  boolean  default false — lp/pp are the same final time
                               because individual times were not recorded
-
-The only_final_time column must be added to the table before uploading records
-that contain it:
-    ALTER TABLE public.timestamps ADD COLUMN only_final_time boolean DEFAULT false;
 """
 
 import os
@@ -81,6 +78,51 @@ def get_existing_competitions(
             break
         offset += _PAGE_SIZE
     return existing
+
+
+def get_category_attack_types(
+    client: Client,
+    league_display: str,
+) -> dict[str, set[str]]:
+    """Return all (category → set of attack_types) already in the DB for a league.
+
+    Used by backfill conflict detection to compare new scraped data against
+    whatever has already been uploaded across all years.
+    """
+    result: dict[str, set[str]] = {}
+    offset = 0
+    while True:
+        resp = (
+            client.table(_TABLE)
+            .select('category, attack_type')
+            .eq('league', league_display)
+            .range(offset, offset + _PAGE_SIZE - 1)
+            .execute()
+        )
+        for row in resp.data:
+            cat = row['category']
+            at = row['attack_type']
+            result.setdefault(cat, set()).add(at)
+        if len(resp.data) < _PAGE_SIZE:
+            break
+        offset += _PAGE_SIZE
+    return result
+
+
+def delete_league_records(client: Client, league_display: str) -> int:
+    """Delete ALL rows for a league from the DB.
+
+    Returns the number of rows deleted.
+    Used when a backfill conflict is detected — wipes the league so it can be
+    re-loaded cleanly once the config is corrected.
+    """
+    result = (
+        client.table(_TABLE)
+        .delete()
+        .eq('league', league_display)
+        .execute()
+    )
+    return len(result.data)
 
 
 _NULLABLE_FLOAT_COLS = ('lp', 'pp')

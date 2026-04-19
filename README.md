@@ -101,9 +101,9 @@ python scraper.py zl debug_output/zl -o out.csv
 
 Each result row needs an `attack_type` value (`2B` or `3B`). The scraper resolves this in three tiers:
 
-1. **Per-league override** in `config.json` — can be a fixed value or `"auto"`, which parses the `NxB` pattern from the competition's h3 heading. Useful for leagues where attack type varies by competition (e.g. PLPU Muži).
-2. **Global default** from the top-level `categories` map in `config.json`.
-3. **Interactive prompt** (when running with `interactive=True`, i.e. the debug CLI).
+1. **Per-league override** in `config.json` — can be a fixed value (`"2B"` / `"3B"`) or `"auto"`, which parses the `NxB` pattern from the competition's h3 heading. Useful for leagues where attack type varies by competition (e.g. PLPU Muži).
+2. **Global default** from the top-level `categories` map in `config.json`. All entries default to `"auto"` — the NxB pattern is parsed from the heading. Set a fixed value here to pin a category globally (e.g. if a league always runs `"Ženy"` as `2B` and the heading never contains `NxB`).
+3. **Interactive prompt** (when running with `interactive=True`, i.e. the debug CLI) or a warning + row skip (automated mode) when no type could be determined.
 
 #### `only_final_time` flag
 
@@ -147,6 +147,14 @@ python orchestrator.py --backfill --league zl  # one league
 Backfill reads the league definitions from `config.json` and processes the specified league(s) from that file.
 Downloads every year from `start_year` to the current year, diffs against the DB, and uploads only new rows. Safe to re-run — it never creates duplicates.
 
+**Conflict detection** runs before each upload. The scraper tracks which `attack_type` values it has seen for every category — both from the DB (existing data) and from all years already processed in the current run. If a category ever resolves to two different attack types (e.g. `Muži` is `3B` in 2022 but `2B` in 2023, or both within the same year), the backfill:
+
+1. Prints a detailed conflict report naming the category, the conflicting types, and the year where the new conflict was detected vs the prior data
+2. Deletes **all existing rows for that league** from the DB so the state is clean
+3. Stops the league's backfill entirely
+
+To resolve: inspect the HTML for the flagged year, decide whether the difference is intentional (add a per-league `categories` override in `config.json`) or a data error, then re-run the backfill for that league.
+
 ---
 
 ## Database schema
@@ -157,6 +165,7 @@ Table: `public.timestamps`
 |------------------|-----------|-------|
 | `attack_date`    | `text`    | YYYY-MM-DD |
 | `league`         | `text`    | Display name (ŽL, EXČR, …) |
+| `full_league_name` | `text`  | Full name (Žďárská liga, Extraliga ČR, …) |
 | `place`          | `text`    | Competition venue |
 | `placement`      | `text`    | Final ranking position |
 | `attack_type`    | `text`    | `2B` or `3B` |
@@ -194,6 +203,7 @@ cp .env.example .env
 CREATE TABLE public.timestamps (
     attack_date       text,
     league            text,
+    full_league_name  text,
     place             text,
     placement         text,
     attack_type       text,
@@ -239,8 +249,9 @@ After each run the workflow auto-commits `config.json` back to `main` if the pen
   "leagues": {
     "zl": {
       "display_name": "ŽL",   // used as the league value in the DB
+      "full_league_name": "Žďárská liga",  // written to full_league_name column
       "start_year": 2012,      // earliest year to scrape in backfill
-      "active": true,          // false = skip entirely
+      "active": true,          // false = skip in daily mode (backfill ignores this)
       // Competitions known to be scheduled but not yet in the DB.
       // Entries are added during schedule refreshes and removed once
       // results are successfully uploaded.
@@ -251,7 +262,8 @@ After each run the workflow auto-commits `config.json` back to `main` if the pen
       "last_schedule_check": "2026-04-19"
     },
     "plpu": {
-      // Per-league category override — "auto" parses NxB from the h3 heading
+      // Per-league category override — "auto" parses NxB from the h3 heading.
+      // A fixed value ("2B"/"3B") overrides the global default for that category.
       "categories": { "Muži": "auto" }
     }
   }
