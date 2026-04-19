@@ -1,0 +1,4 @@
+beautifulsoup4>=4.12
+requests>=2.25
+supabase>=2.0
+python-dotenv>=1.0

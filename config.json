@@ -1,0 +1,55 @@
+{
+  "categories": {
+    "Muži": "3B",
+    "Ženy": "2B",
+    "Junioři": "3B",
+    "Juniorky": "2B",
+    "Dorostenci": "2B",
+    "Muži>35": "2B"
+  },
+  "leagues": {
+    "zl": {
+      "display_name": "ŽL",
+      "start_year": 2012,
+      "active": true,
+      "pending_competitions": [
+        {"date": "2026-05-30", "place": "Zbraslav"},
+        {"date": "2026-05-31", "place": "Maršovice"},
+        {"date": "2026-06-06", "place": "Lavičky"},
+        {"date": "2026-06-07", "place": "Netín"},
+        {"date": "2026-08-01", "place": "Nové Veselí"},
+        {"date": "2026-08-02", "place": "Radostín nad Oslavou"},
+        {"date": "2026-08-22", "place": "Lhotky Sport"},
+        {"date": "2026-08-23", "place": "Otín"},
+        {"date": "2026-09-12", "place": "Jasenice"},
+        {"date": "2026-09-13", "place": "Jabloňov"},
+        {"date": "2026-09-19", "place": "Hamry nad Sázavou"}
+      ],
+      "last_schedule_check": "2026-04-19"
+    },
+    "excr": {
+      "display_name": "EXČR",
+      "start_year": 1996,
+      "active": true,
+      "pending_competitions": [],
+      "last_schedule_check": null
+    },
+    "vcbl": {
+      "display_name": "VCB",
+      "start_year": 2002,
+      "active": true,
+      "pending_competitions": [],
+      "last_schedule_check": null
+    },
+    "plpu": {
+      "display_name": "PLPU",
+      "start_year": 2013,
+      "active": true,
+      "pending_competitions": [],
+      "last_schedule_check": null,
+      "categories": {
+        "Muži": "auto"
+      }
+    }
+  }
+}

@@ -5,16 +5,18 @@ Scrapes downloaded competition result HTML pages from firesport.eu and writes
 a CSV with columns:
     attack_date, league, place, placement, attack_type, category, team, lp, pp
 
-The attack_type (2B or 3B) is determined by a category_config.json file instead
-of being scraped from the HTML pages. This provides a single source of truth for
-category-to-attack-type mappings.
+The attack_type (2B or 3B) is resolved via a three-tier lookup:
+  1. Per-league override in config.json ("categories" inside the league entry).
+     Use the special value "auto" to parse the type directly from the HTML heading.
+  2. Global default in config.json top-level "categories".
+  3. Interactive prompt (debug mode) or warning+skip (automated mode).
 
 Usage:
-    python3 scraper.py <league> <input_dir> -o <output_file>
+    python3 scraper.py <league_key> <input_dir> -o <output_file>
 
 Example:
-    python3 scraper.py ZL zl/ -o zl_results.csv
-    python3 scraper.py EXCR excr/ -o excr_results.csv
+    python3 scraper.py zl zl/ -o zl_results.csv
+    python3 scraper.py plpu plpu/ -o plpu_results.csv
 """
 
 import argparse
@@ -29,8 +31,8 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 # Result values that should produce an empty lp/pp field
 _INVALID_TIME_STRS = frozenset({'NP', 'DSQ', 'MS', '-'})
 
-# Configuration file for category → attack_type mappings
-_CONFIG_FILE = 'category_config.json'
+# Configuration file path
+_CONFIG_FILE = 'config.json'
 
 
 def parse_time(value: str) -> str:
@@ -100,21 +102,31 @@ def extract_team(td_team: Tag, td_district: Tag) -> str:
     return team
 
 
-def load_category_config(config_path: Path) -> dict:
-    """Load category-to-attack_type mapping from JSON config file.
-    
-    Returns a dict mapping category names to attack types ('2B' or '3B').
-    Raises FileNotFoundError if config file doesn't exist.
-    """
+def load_config(config_path: Path) -> dict:
+    """Load full config.json."""
     if not config_path.exists():
         raise FileNotFoundError(
             f"Config file not found: {config_path}\n"
-            "Please create category_config.json with category-to-attack_type mappings.\n"
-            "Example:\n"
-            '{"Muži": "3B", "Ženy": "2B", "Junioři": "3B", ...}'
+            "Please create config.json (see config structure in project docs)."
         )
     with open(config_path, encoding='utf-8') as f:
         return json.load(f)
+
+
+def save_config(config: dict, config_path: Path) -> None:
+    """Persist config back to disk."""
+    with open(config_path, 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=2, ensure_ascii=False)
+        f.write('\n')
+
+
+def get_league_categories(config: dict, league_key: str) -> dict:
+    """Return per-league category overrides (may include 'auto' values)."""
+    return (
+        config.get('leagues', {})
+        .get(league_key, {})
+        .get('categories', {})
+    )
 
 
 def get_category(h3_text: str) -> str:
@@ -123,50 +135,83 @@ def get_category(h3_text: str) -> str:
     return words[0] if words else ''
 
 
-def get_attack_type_from_config(
-    category: str,
-    config: dict,
-    html_path: Path,
-) -> str:
-    """Get attack type from config for the given category.
-    
-    If category is not in config, prompts user to add it or exits with error.
-    The config file is updated with the new category if user provides a valid type.
+def parse_attack_type_from_h3(h3_text: str) -> str | None:
+    """Extract attack type from an h3 heading text.
+
+    Looks for patterns like '3xB' or '2xB' (case-insensitive) and converts
+    them to '3B' / '2B'.  Returns None if no such pattern is found.
     """
-    if category in config:
-        return config[category]
-    
-    # Category not found - ask user
-    print(
-        f"\nError: Category '{category}' not found in {_CONFIG_FILE}",
-        file=sys.stderr,
-    )
-    print(f"From file: {html_path.name}", file=sys.stderr)
-    print("", file=sys.stderr)
-    
-    while True:
-        user_input = input(
-            f"Enter attack type for category '{category}' (2B or 3B), "
-            f"or 'skip' to stop: "
-        ).strip().upper()
-        
-        if user_input == 'SKIP':
-            print("Stopping due to unknown category.", file=sys.stderr)
-            sys.exit(1)
-        
-        if user_input in ('2B', '3B'):
-            # Update config in memory and save to file
-            config[category] = user_input
-            config_path = Path(_CONFIG_FILE)
-            with open(config_path, 'w', encoding='utf-8') as f:
-                json.dump(config, f, indent=2, ensure_ascii=False)
+    m = re.search(r'(\d)xB', h3_text, re.IGNORECASE)
+    return f'{m.group(1)}B' if m else None
+
+
+def resolve_attack_type(
+    category: str,
+    h3_text: str,
+    global_categories: dict,
+    league_categories: dict,
+    source_name: str,
+    interactive: bool = True,
+    full_config: dict | None = None,
+) -> str | None:
+    """Resolve the attack type for a category using three-tier lookup.
+
+    Priority order:
+      1. Per-league override (league_categories).  The special value 'auto'
+         means: parse the type from the h3 heading text.
+      2. Global default (global_categories).
+      3. Unknown: in interactive mode, prompt the user and persist the answer
+         to the global categories; in automated mode, emit a warning and return
+         None (the caller must skip those rows).
+    """
+    # 1. Per-league override
+    if category in league_categories:
+        league_val = league_categories[category]
+        if league_val == 'auto':
+            attack_type = parse_attack_type_from_h3(h3_text)
+            if attack_type:
+                return attack_type
             print(
-                f"✓ Added '{category}': '{user_input}' to {_CONFIG_FILE}",
+                f"Warning: 'auto' configured for '{category}' but no NxB "
+                f"pattern found in heading: {h3_text!r}  ({source_name})",
                 file=sys.stderr,
             )
-            return user_input
+            # fall through to global default
         else:
-            print("ERROR: Please enter '2B' or '3B'.", file=sys.stderr)
+            return league_val
+
+    # 2. Global default
+    if category in global_categories:
+        return global_categories[category]
+
+    # 3. Not found anywhere
+    if not interactive:
+        print(
+            f"Warning: Category '{category}' not in config — skipping rows "
+            f"from {source_name}",
+            file=sys.stderr,
+        )
+        return None
+
+    # Interactive: prompt user and persist to global categories
+    print(f"\nUnknown category '{category}' in {source_name}", file=sys.stderr)
+    while True:
+        user_input = input(
+            f"Enter attack type for '{category}' (2B or 3B), or 'skip' to stop: "
+        ).strip().upper()
+        if user_input == 'SKIP':
+            print('Stopping due to unknown category.', file=sys.stderr)
+            sys.exit(1)
+        if user_input in ('2B', '3B'):
+            global_categories[category] = user_input
+            if full_config is not None:
+                save_config(full_config, Path(_CONFIG_FILE))
+                print(
+                    f"✓ Added '{category}': '{user_input}' to {_CONFIG_FILE}",
+                    file=sys.stderr,
+                )
+            return user_input
+        print("Please enter '2B' or '3B'.", file=sys.stderr)
 
 
 def parse_rows(
@@ -214,13 +259,23 @@ def parse_rows(
     return rows
 
 
-def scrape_file(html_path: Path, league: str, config: dict) -> list:
+def scrape_file(
+    html_path: Path,
+    league: str,
+    global_categories: dict,
+    league_categories: dict,
+    interactive: bool = True,
+    full_config: dict | None = None,
+) -> list:
     """Parse one HTML file and return all extracted result rows.
-    
+
     Args:
         html_path: Path to the HTML file to scrape
-        league: League identifier (e.g. 'ZL', 'EXCR')
-        config: Category-to-attack_type mapping loaded from category_config.json
+        league: League display name written to the 'league' CSV column
+        global_categories: Top-level category→attack_type mapping from config
+        league_categories: Per-league overrides (may contain 'auto' values)
+        interactive: When True, prompt for unknown categories; else warn+skip
+        full_config: Full config dict, passed through for interactive saving
     """
     with open(html_path, encoding='utf-8', errors='replace') as f:
         html = f.read()
@@ -269,7 +324,17 @@ def scrape_file(html_path: Path, league: str, config: dict) -> list:
         for h3, table in zip(cat_h3s, data_tables):
             h3_text = h3.get_text(strip=True)
             category = get_category(h3_text)
-            attack_type = get_attack_type_from_config(category, config, html_path)
+            attack_type = resolve_attack_type(
+                category,
+                h3_text,
+                global_categories,
+                league_categories,
+                source_name=html_path.name,
+                interactive=interactive,
+                full_config=full_config,
+            )
+            if attack_type is None:
+                continue  # unknown category in automated mode — skip rows
             rows = parse_rows(table, attack_date, league, place, attack_type, category)
             all_rows.extend(rows)
 
@@ -280,7 +345,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description='Scrape firesport.eu HTML result pages to CSV.'
     )
-    parser.add_argument('league', help='League identifier (e.g. ZL, EXCR, VCBL)')
+    parser.add_argument(
+        'league_key',
+        help='League key matching config.json (e.g. zl, excr, plpu)',
+    )
     parser.add_argument('input_dir', help='Directory containing HTML files to scrape')
     parser.add_argument('-o', '--output', required=True, help='Output CSV file path')
     args = parser.parse_args()
@@ -295,13 +363,23 @@ def main() -> None:
         print(f'No HTML files found in {args.input_dir!r}', file=sys.stderr)
         sys.exit(1)
 
-    # Load category configuration
     config_path = Path(_CONFIG_FILE)
     try:
-        config = load_category_config(config_path)
+        config = load_config(config_path)
     except FileNotFoundError as e:
         print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
+
+    league_key = args.league_key.lower()
+    global_categories = config.get('categories', {})
+    league_categories = get_league_categories(config, league_key)
+
+    # Use display_name from config if available, else fall back to upper-cased key
+    league_display = (
+        config.get('leagues', {})
+        .get(league_key, {})
+        .get('display_name', args.league_key.upper())
+    )
 
     fieldnames = [
         'attack_date', 'league', 'place', 'placement',
@@ -314,7 +392,14 @@ def main() -> None:
         writer.writeheader()
 
         for html_path in html_files:
-            rows = scrape_file(html_path, args.league, config)
+            rows = scrape_file(
+                html_path,
+                league_display,
+                global_categories,
+                league_categories,
+                interactive=True,
+                full_config=config,
+            )
             writer.writerows(rows)
             total_rows += len(rows)
             print(f'  {html_path.name}: {len(rows)} rows')
