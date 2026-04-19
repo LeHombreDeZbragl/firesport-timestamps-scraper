@@ -2,3 +2,4 @@
 *.csv
 .env
 debug_output/
+__pycache__/

@@ -1,44 +1,87 @@
-import requests
-import os
+#!/usr/bin/env python3
+"""Firesport competition page downloader.
+
+Provides download_html() for in-memory use by the orchestrator, and a CLI
+for manual/debug downloading to disk.
+
+Usage (CLI):
+    python downloader.py <league> <start_year> <end_year>
+    python downloader.py --debug <league> <start_year> <end_year>
+
+Without --debug: saves to <league>/<LEAGUE>.<year>.html  (legacy location)
+With    --debug: saves to debug_output/<league>/<LEAGUE>.<year>.html
+"""
+
+import argparse
 import sys
 from pathlib import Path
 
-def download_league_data(league_name, start_year, end_year):
-    """
-    Download HTML files for a league across multiple years.
-    
-    Args:
-        league_name: League identifier (e.g., 'vcbl', 'zl')
-        start_year: First year to download
-        end_year: Last year to download (inclusive)
-    """
-    # Create league folder if it doesn't exist
-    league_folder = Path(league_name.lower())
-    league_folder.mkdir(exist_ok=True)
-    
-    # Download HTML for each year
-    for year in range(start_year, end_year + 1):
-        url = f"https://{league_name.lower()}.firesport.eu/web_souteze.php?akce=sel&rok={year}"
-        
-        try:
-            html = requests.get(url).text
-            output_file = league_folder / f"{league_name.upper()}.{year}.html"
-            
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(html)
-            
-            print(f"Saved {output_file}")
-        except Exception as e:
-            print(f"Error downloading {year}: {e}")
+import requests
 
-if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print("Usage: python downloader.py <league> <start_year> <end_year>")
-        print("Example: python downloader.py vcbl 2022 2025")
-        sys.exit(1)
-    
-    league = sys.argv[1]
-    start_year = int(sys.argv[2])
-    end_year = int(sys.argv[3])
-    
-    download_league_data(league, start_year, end_year)
+_BASE_URL = 'https://{league}.firesport.eu/web_souteze.php?akce=sel&rok={year}'
+_TIMEOUT = 30  # seconds
+
+
+def download_html(league: str, year: int) -> str:
+    """Download the competition-list page for a league/year and return HTML.
+
+    Args:
+        league: League URL slug (e.g. 'zl', 'excr', 'vcbl').
+        year:   Season year.
+
+    Returns:
+        Raw HTML as a string.
+
+    Raises:
+        requests.RequestException on network or HTTP errors.
+    """
+    url = _BASE_URL.format(league=league.lower(), year=year)
+    response = requests.get(url, timeout=_TIMEOUT)
+    response.raise_for_status()
+    return response.text
+
+
+def download_league_data(league: str, start_year: int, end_year: int, output_dir: Path) -> None:
+    """Download HTML files for a league across multiple years and save to disk.
+
+    Args:
+        league:     League URL slug.
+        start_year: First year to download.
+        end_year:   Last year to download (inclusive).
+        output_dir: Directory to save files into (created if absent).
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for year in range(start_year, end_year + 1):
+        try:
+            html = download_html(league, year)
+            output_file = output_dir / f'{league.upper()}.{year}.html'
+            output_file.write_text(html, encoding='utf-8')
+            print(f'Saved {output_file}')
+        except requests.RequestException as exc:
+            print(f'Error downloading {league} {year}: {exc}', file=sys.stderr)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description='Download firesport.eu HTML pages for a league.'
+    )
+    parser.add_argument('league', help='League URL slug (e.g. zl, excr, vcbl)')
+    parser.add_argument('start_year', type=int, help='First year to download')
+    parser.add_argument('end_year', type=int, help='Last year to download (inclusive)')
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Save to debug_output/<league>/ instead of <league>/',
+    )
+    args = parser.parse_args()
+
+    if args.debug:
+        output_dir = Path('debug_output') / args.league.lower()
+    else:
+        output_dir = Path(args.league.lower())
+
+    download_league_data(args.league, args.start_year, args.end_year, output_dir)
+
+
+if __name__ == '__main__':
+    main()

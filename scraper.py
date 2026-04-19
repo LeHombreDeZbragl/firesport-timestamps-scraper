@@ -241,9 +241,22 @@ def parse_rows(
             # td[1]: team name + optional suffix; td[3]: district code
             team = extract_team(tds[1], tds[3])
 
+            # td[2]: final/combined time inside <b> (for only_final_time detection)
+            b_final = tds[2].find('b')
+            final_time = parse_time(b_final.get_text(strip=True)) if b_final else ''
+
             # td[4]: first attempt (lp), td[5]: second attempt (pp)
             lp = parse_time(tds[4].get_text(strip=True))
             pp = parse_time(tds[5].get_text(strip=True))
+
+            # When individual times are absent but a final time exists,
+            # duplicate the final time into both lp and pp and flag the row.
+            if lp == '' and pp == '' and final_time:
+                lp = final_time
+                pp = final_time
+                only_final_time = True
+            else:
+                only_final_time = False
 
             rows.append({
                 'attack_date': attack_date,
@@ -255,31 +268,35 @@ def parse_rows(
                 'team': team,
                 'lp': lp,
                 'pp': pp,
+                'only_final_time': only_final_time,
             })
     return rows
 
 
-def scrape_file(
-    html_path: Path,
-    league: str,
+def scrape_html(
+    html_content: str,
+    source_name: str,
+    league_display: str,
     global_categories: dict,
     league_categories: dict,
-    interactive: bool = True,
+    interactive: bool = False,
     full_config: dict | None = None,
 ) -> list:
-    """Parse one HTML file and return all extracted result rows.
+    """Parse HTML content string and return all extracted result rows.
+
+    This is the core parsing function used by the orchestrator (in-memory
+    pipeline).  scrape_file() is a file-based wrapper around this function.
 
     Args:
-        html_path: Path to the HTML file to scrape
-        league: League display name written to the 'league' CSV column
-        global_categories: Top-level category→attack_type mapping from config
-        league_categories: Per-league overrides (may contain 'auto' values)
-        interactive: When True, prompt for unknown categories; else warn+skip
-        full_config: Full config dict, passed through for interactive saving
+        html_content:      Raw HTML string to parse.
+        source_name:       Label for warnings (e.g. filename or URL).
+        league_display:    League alias written to the 'league' column.
+        global_categories: Top-level category→attack_type mapping.
+        league_categories: Per-league overrides (may contain 'auto').
+        interactive:       Prompt for unknown categories when True, else skip.
+        full_config:       Full config dict for persisting new categories.
     """
-    with open(html_path, encoding='utf-8', errors='replace') as f:
-        html = f.read()
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html_content, 'html.parser')
 
     # Each competition event lives in <div id='tabs-NNNNN'>
     tab_divs = soup.find_all('div', id=re.compile(r'^tabs-\d+$'))
@@ -315,7 +332,7 @@ def scrape_file(
 
         if len(cat_h3s) != len(data_tables):
             print(
-                f'Warning: {html_path.name} tab#{tab_div.get("id")}: '
+                f'Warning: {source_name} tab#{tab_div.get("id")}: '
                 f'{len(cat_h3s)} category headings but {len(data_tables)} '
                 f'data tables — pairing by index, extra entries will be skipped.',
                 file=sys.stderr,
@@ -329,16 +346,82 @@ def scrape_file(
                 h3_text,
                 global_categories,
                 league_categories,
-                source_name=html_path.name,
+                source_name=source_name,
                 interactive=interactive,
                 full_config=full_config,
             )
             if attack_type is None:
                 continue  # unknown category in automated mode — skip rows
-            rows = parse_rows(table, attack_date, league, place, attack_type, category)
+            rows = parse_rows(table, attack_date, league_display, place, attack_type, category)
             all_rows.extend(rows)
 
     return all_rows
+
+
+def scrape_schedule(html_content: str) -> list:
+    """Extract competition schedule metadata from an HTML year page.
+
+    Works on pages where competitions are listed but results are not yet
+    published — does not require result tables to be present.
+
+    Returns a list of dicts with keys:
+        date        (str)   'YYYY-MM-DD' of the competition
+        place       (str)   place name from the first <h3> in the tab
+        has_results (bool)  True if the tab contains at least one result table
+
+    Tabs without a parseable date are silently skipped.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    tab_divs = soup.find_all('div', id=re.compile(r'^tabs-\d+$'))
+
+    schedule = []
+    for tab_div in tab_divs:
+        place_h3 = tab_div.find('h3')
+        place = place_h3.get_text(strip=True) if place_h3 else ''
+
+        attack_date = ''
+        for b_tag in tab_div.find_all('b'):
+            if 'Kdy' in b_tag.get_text():
+                parent_td = b_tag.find_parent('td')
+                if parent_td:
+                    next_td = parent_td.find_next_sibling('td')
+                    if next_td:
+                        attack_date = parse_date(next_td.get_text(strip=True))
+                break
+
+        if not attack_date:
+            continue  # skip tabs without a parseable date
+
+        has_results = bool(tab_div.find('table', attrs={'data-role': 'table'}))
+        schedule.append({'date': attack_date, 'place': place, 'has_results': has_results})
+
+    return schedule
+
+
+def scrape_file(
+    html_path: Path,
+    league_display: str,
+    global_categories: dict,
+    league_categories: dict,
+    interactive: bool = True,
+    full_config: dict | None = None,
+) -> list:
+    """Parse one HTML file and return all extracted result rows.
+
+    Convenience wrapper around scrape_html() for file-based (debug) workflows.
+    The orchestrator uses scrape_html() directly with in-memory HTML strings.
+    """
+    with open(html_path, encoding='utf-8', errors='replace') as f:
+        html_content = f.read()
+    return scrape_html(
+        html_content,
+        html_path.name,
+        league_display,
+        global_categories,
+        league_categories,
+        interactive=interactive,
+        full_config=full_config,
+    )
 
 
 def main() -> None:
@@ -384,6 +467,7 @@ def main() -> None:
     fieldnames = [
         'attack_date', 'league', 'place', 'placement',
         'attack_type', 'category', 'team', 'lp', 'pp',
+        'only_final_time',
     ]
 
     total_rows = 0
