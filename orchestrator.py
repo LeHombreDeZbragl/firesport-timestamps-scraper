@@ -81,6 +81,7 @@ def _process_year(
     league_cfg: dict,
     global_categories: dict,
     year: int,
+    category_aliases: dict | None = None,
 ) -> int:
     """Download, scrape, diff, and upload for one league + year.
 
@@ -96,6 +97,7 @@ def _process_year(
         return 0
 
     league_categories = league_cfg.get('categories', {})
+    aliases = category_aliases or {}
     rows = scraper.scrape_html(
         html,
         f'{league_key.upper()}.{year}.html',
@@ -104,6 +106,7 @@ def _process_year(
         league_categories,
         interactive=False,
         full_league_name=full_league_name,
+        category_aliases=aliases,
     )
 
     if not rows:
@@ -187,24 +190,45 @@ def _refresh_schedule(
     return True
 
 
+def _exempt_categories(
+    global_categories: dict,
+    league_categories: dict,
+) -> set[str]:
+    """Return the set of category names whose effective mode is 'auto'.
+
+    These are exempt from backfill conflict detection because intentional
+    type variation has already been confirmed by the user.
+    A per-league value of 'auto' takes precedence over a global 'testing'.
+    """
+    exempt: set[str] = set()
+    all_cats = set(global_categories) | set(league_categories)
+    for cat in all_cats:
+        effective = league_categories.get(cat) or global_categories.get(cat)
+        if effective == 'auto':
+            exempt.add(cat)
+    return exempt
+
+
 def _check_attack_type_conflicts(
     new_rows: list[dict],
     year: int,
     seen: dict[str, set[str]],
     display: str,
+    exempt_categories: set[str],
 ) -> list[str]:
     """Return a list of human-readable conflict messages, empty if none.
 
     Compares the attack_types in new_rows against the seen map which holds
     all types already accepted (from the DB or earlier years in this run).
-    Also checks for internal conflicts within new_rows itself.
+    Categories in exempt_categories (mode 'auto') are skipped — intentional
+    type variation has already been confirmed for those.
     """
-    # Build per-category attack types seen in this year's scraped rows
     year_types: dict[str, set[str]] = {}
     for row in new_rows:
         cat = row['category']
-        at = row['attack_type']
-        year_types.setdefault(cat, set()).add(at)
+        if cat in exempt_categories:
+            continue
+        year_types.setdefault(cat, set()).add(row['attack_type'])
 
     conflicts = []
     for cat, types_this_year in year_types.items():
@@ -259,6 +283,7 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
                 # There are overdue pending competitions — download and scrape
                 uploaded = _process_year(
                     client, league_key, league_cfg, global_categories, year,
+                    category_aliases=config.get('category_aliases', {}),
                 )
 
                 if uploaded > 0:
@@ -331,6 +356,8 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
 
         # Seed seen map from whatever is already in the DB for this league
         seen: dict[str, set[str]] = db.get_category_attack_types(client, display)
+        league_categories = league_cfg.get('categories', {})
+        exempt = _exempt_categories(global_categories, league_categories)
         conflict_found = False
 
         for year in range(start_year, today.year + 1):
@@ -344,7 +371,6 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
                 print(f'  [{display} {year}] Download failed: {exc}', file=sys.stderr)
                 continue
 
-            league_categories = league_cfg.get('categories', {})
             full_league_name = league_cfg.get('full_league_name', '')
             rows = scraper.scrape_html(
                 html,
@@ -367,7 +393,7 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
                 print(f'  [{display} {year}] No new rows')
                 continue
 
-            conflicts = _check_attack_type_conflicts(new_rows, year, seen, display)
+            conflicts = _check_attack_type_conflicts(new_rows, year, seen, display, exempt)
             if conflicts:
                 print(
                     f'\n[{display}] CONFLICT detected in {year} — aborting entire league backfill.'

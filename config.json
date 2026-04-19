@@ -1,71 +1,84 @@
 {
-  "categories": {
-    "Muži": "auto",
-    "Ženy": "auto",
-    "Junioři": "auto",
-    "Juniorky": "auto",
-    "Dorostenci": "auto",
-    "Muži>35": "auto"
-  },
-  "leagues": {
-    "zl": {
-      "display_name": "ŽL",
-      "full_league_name": "Žďárská liga",
-      "start_year": 2012,
-      "active": true,
-      "pending_competitions": [
-        {"date": "2026-05-30", "place": "Zbraslav"},
-        {"date": "2026-05-31", "place": "Maršovice"},
-        {"date": "2026-06-06", "place": "Lavičky"},
-        {"date": "2026-06-07", "place": "Netín"},
-        {"date": "2026-08-01", "place": "Nové Veselí"},
-        {"date": "2026-08-02", "place": "Radostín nad Oslavou"},
-        {"date": "2026-08-22", "place": "Lhotky Sport"},
-        {"date": "2026-08-23", "place": "Otín"},
-        {"date": "2026-09-12", "place": "Jasenice"},
-        {"date": "2026-09-13", "place": "Jabloňov"},
-        {"date": "2026-09-19", "place": "Hamry nad Sázavou"}
-      ],
-      "last_schedule_check": "2026-04-19",
-      "categories": {
-        "Muži": "3B",
-        "Ženy": "2B"
-      }
+    "category_aliases": {
+        "Finále": "Ostatní"
     },
-    "excr": {
-      "display_name": "EXČR",
-      "full_league_name": "Extraliga ČR",
-      "start_year": 1996,
-      "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+    "categories": {
+        "Muži": "testing",
+        "Ženy": "testing",
+        "Junioři": "testing",
+        "Juniorky": "testing",
+        "Dorostenci": "testing",
+        "Muži>35": "testing",
+        "Finále": "auto",
+        "Profi": "testing",
+        "PS-12": "testing"
     },
-    "vcbl": {
-      "display_name": "VCB",
-      "full_league_name": "Velká cena Blanenska v PÚ",
-      "start_year": 2002,
-      "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
-    },
-    "plpu": {
-      "display_name": "PLPU",
-      "full_league_name": "Fire night cup",
-      "start_year": 2013,
-      "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null,
-      "categories": {
-        "Muži": "auto"
-      }
-    },
-    "fnc": {
-      "display_name": "FNC",
-      "full_league_name": "Fire night cup",
-      "start_year": 2013,
-      "active": false,
-      "pending_competitions": [],
-      "last_schedule_check": null
+    "leagues": {
+        "zl": {
+            "display_name": "ŽL",
+            "full_league_name": "Žďárská liga",
+            "start_year": 2012,
+            "active": true,
+            "pending_competitions": [
+                {"date": "2026-05-30", "place": "Zbraslav"},
+                {"date": "2026-05-31", "place": "Maršovice"},
+                {"date": "2026-06-06", "place": "Lavičky"},
+                {"date": "2026-06-07", "place": "Netín"},
+                {"date": "2026-08-01", "place": "Nové Veselí"},
+                {"date": "2026-08-02", "place": "Radostín nad Oslavou"},
+                {"date": "2026-08-22", "place": "Lhotky Sport"},
+                {"date": "2026-08-23", "place": "Otín"},
+                {"date": "2026-09-12", "place": "Jasenice"},
+                {"date": "2026-09-13", "place": "Jabloňov"},
+                {"date": "2026-09-19", "place": "Hamry nad Sázavou"}
+            ],
+            "last_schedule_check": "2026-04-19",
+            "categories": {
+                "Muži": "3B",
+                "Ženy": "2B"
+            }
+        },
+        "excr": {
+            "display_name": "EXČR",
+            "full_league_name": "Extraliga ČR",
+            "start_year": 1996,
+            "active": true,
+            "pending_competitions": [],
+            "last_schedule_check": null
+        },
+        "vcbl": {
+            "display_name": "VCB",
+            "full_league_name": "Velká cena Blanenska v PÚ",
+            "start_year": 2002,
+            "active": true,
+            "pending_competitions": [],
+            "last_schedule_check": null
+        },
+        "plpu": {
+            "display_name": "PLPU",
+            "full_league_name": "Fire night cup",
+            "start_year": 2013,
+            "active": true,
+            "pending_competitions": [],
+            "last_schedule_check": null,
+            "categories": {
+                "Muži": "auto",
+                "Ženy": "2B"
+            }
+        },
+        "fnc": {
+            "display_name": "FNC",
+            "full_league_name": "Fire night cup",
+            "start_year": 2013,
+            "active": false,
+            "pending_competitions": [],
+            "last_schedule_check": null,
+            "categories": {
+                "Muži": "2B",
+                "Ženy": "2B",
+                "Profi": "2B",
+                "PS-12": "2B"
+            }
+        }
     }
-  }
 }

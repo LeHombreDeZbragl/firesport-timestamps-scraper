@@ -157,42 +157,56 @@ def resolve_attack_type(
     """Resolve the attack type for a category using three-tier lookup.
 
     Priority order:
-      1. Per-league override (league_categories).  The special value 'auto'
-         means: parse the type from the h3 heading text.
+      1. Per-league override (league_categories).
       2. Global default (global_categories).
-      3. Unknown: in interactive mode, prompt the user and persist the answer
-         to the global categories; in automated mode, emit a warning and return
-         None (the caller must skip those rows).
+      3. Unknown: in interactive mode, prompt the user; in automated mode,
+         warn and return None (rows skipped by the caller).
+
+    Mode values accepted at tiers 1 and 2:
+      'testing'  Parse NxB from the h3 heading and WARN when the pattern is
+                 not found.  Use this as the discovery default for a new league.
+                 Also subject to backfill conflict detection.
+      'auto'     Parse NxB from the h3 heading silently — no warning when the
+                 pattern is absent (rows skipped quietly).  Exempt from backfill
+                 conflict detection.  Use once intentional type variation is
+                 confirmed.
+      '2B'/'3B'  Fixed value — always returned as-is, no parsing.
     """
+    def _parse_or_warn(mode: str, tier_label: str) -> str | None:
+        attack_type = parse_attack_type_from_h3(h3_text)
+        if attack_type:
+            return attack_type
+        if mode == 'testing':
+            print(
+                f"Warning: {tier_label} 'testing' for '{category}' — "
+                f"no NxB pattern found in heading: {h3_text!r}  ({source_name})",
+                file=sys.stderr,
+            )
+        return None  # 'auto' is silent
+
     # 1. Per-league override
     if category in league_categories:
         league_val = league_categories[category]
-        if league_val == 'auto':
-            attack_type = parse_attack_type_from_h3(h3_text)
-            if attack_type:
-                return attack_type
-            print(
-                f"Warning: 'auto' configured for '{category}' but no NxB "
-                f"pattern found in heading: {h3_text!r}  ({source_name})",
-                file=sys.stderr,
-            )
-            # fall through to global default
+        if league_val in ('auto', 'testing'):
+            result = _parse_or_warn(league_val, 'per-league')
+            if result:
+                return result
+            if league_val == 'testing':
+                return None  # already warned, skip rows
+            # 'auto': fall through to global default silently
         else:
             return league_val
 
     # 2. Global default
     if category in global_categories:
         global_val = global_categories[category]
-        if global_val == 'auto':
-            attack_type = parse_attack_type_from_h3(h3_text)
-            if attack_type:
-                return attack_type
-            print(
-                f"Warning: global 'auto' for '{category}' but no NxB "
-                f"pattern found in heading: {h3_text!r}  ({source_name})",
-                file=sys.stderr,
-            )
-            # fall through to tier 3
+        if global_val in ('auto', 'testing'):
+            result = _parse_or_warn(global_val, 'global')
+            if result:
+                return result
+            if global_val == 'testing':
+                return None  # already warned, skip rows
+            # 'auto': fall through to tier 3 silently
         else:
             return global_val
 
@@ -296,6 +310,7 @@ def scrape_html(
     interactive: bool = False,
     full_config: dict | None = None,
     full_league_name: str = '',
+    category_aliases: dict | None = None,
 ) -> list:
     """Parse HTML content string and return all extracted result rows.
 
@@ -311,6 +326,8 @@ def scrape_html(
         interactive:       Prompt for unknown categories when True, else skip.
         full_config:       Full config dict for persisting new categories.
         full_league_name:  Full human-readable league name for the DB column.
+        category_aliases:  Mapping of raw category names to display names
+                           (e.g. {"Finále": "Ostatní"}).
     """
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -357,6 +374,8 @@ def scrape_html(
         for h3, table in zip(cat_h3s, data_tables):
             h3_text = h3.get_text(strip=True)
             category = get_category(h3_text)
+            if category_aliases:
+                category = category_aliases.get(category, category)
             attack_type = resolve_attack_type(
                 category,
                 h3_text,
