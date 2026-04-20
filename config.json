@@ -1,84 +1,223 @@
 {
-    "category_aliases": {
-        "Finále": "Ostatní"
-    },
-    "categories": {
-        "Muži": "testing",
-        "Ženy": "testing",
-        "Junioři": "testing",
-        "Juniorky": "testing",
-        "Dorostenci": "testing",
-        "Muži>35": "testing",
-        "Finále": "auto",
-        "Profi": "testing",
-        "PS-12": "testing"
-    },
-    "leagues": {
-        "zl": {
-            "display_name": "ŽL",
-            "full_league_name": "Žďárská liga",
-            "start_year": 2012,
-            "active": true,
-            "pending_competitions": [
-                {"date": "2026-05-30", "place": "Zbraslav"},
-                {"date": "2026-05-31", "place": "Maršovice"},
-                {"date": "2026-06-06", "place": "Lavičky"},
-                {"date": "2026-06-07", "place": "Netín"},
-                {"date": "2026-08-01", "place": "Nové Veselí"},
-                {"date": "2026-08-02", "place": "Radostín nad Oslavou"},
-                {"date": "2026-08-22", "place": "Lhotky Sport"},
-                {"date": "2026-08-23", "place": "Otín"},
-                {"date": "2026-09-12", "place": "Jasenice"},
-                {"date": "2026-09-13", "place": "Jabloňov"},
-                {"date": "2026-09-19", "place": "Hamry nad Sázavou"}
-            ],
-            "last_schedule_check": "2026-04-19",
-            "categories": {
-                "Muži": "3B",
-                "Ženy": "2B"
-            }
+  "category_aliases": {
+    "Finále": "Ostatní"
+  },
+  "categories": {
+    "Muži": "testing",
+    "Ženy": "testing",
+    "Junioři": "testing",
+    "Juniorky": "testing",
+    "Dorostenci": "testing",
+    "Muži>35": "testing",
+    "Finále": "auto",
+    "Profi": "testing",
+    "PS-12": "testing"
+  },
+  "leagues": {
+    "zl": {
+      "display_name": "ŽL",
+      "full_league_name": "Žďárská liga",
+      "start_year": 2012,
+      "active": true,
+      "pending_competitions": [
+        {
+          "date": "2026-05-30",
+          "place": "Zbraslav"
         },
-        "excr": {
-            "display_name": "EXČR",
-            "full_league_name": "Extraliga ČR",
-            "start_year": 1996,
-            "active": true,
-            "pending_competitions": [],
-            "last_schedule_check": null
+        {
+          "date": "2026-05-31",
+          "place": "Maršovice"
         },
-        "vcbl": {
-            "display_name": "VCB",
-            "full_league_name": "Velká cena Blanenska v PÚ",
-            "start_year": 2002,
-            "active": true,
-            "pending_competitions": [],
-            "last_schedule_check": null
+        {
+          "date": "2026-06-06",
+          "place": "Lavičky"
         },
-        "plpu": {
-            "display_name": "PLPU",
-            "full_league_name": "Fire night cup",
-            "start_year": 2013,
-            "active": true,
-            "pending_competitions": [],
-            "last_schedule_check": null,
-            "categories": {
-                "Muži": "auto",
-                "Ženy": "2B"
-            }
+        {
+          "date": "2026-06-07",
+          "place": "Netín"
         },
-        "fnc": {
-            "display_name": "FNC",
-            "full_league_name": "Fire night cup",
-            "start_year": 2013,
-            "active": false,
-            "pending_competitions": [],
-            "last_schedule_check": null,
-            "categories": {
-                "Muži": "2B",
-                "Ženy": "2B",
-                "Profi": "2B",
-                "PS-12": "2B"
-            }
+        {
+          "date": "2026-08-01",
+          "place": "Nové Veselí"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Radostín nad Oslavou"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Lhotky Sport"
+        },
+        {
+          "date": "2026-08-23",
+          "place": "Otín"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Jasenice"
+        },
+        {
+          "date": "2026-09-13",
+          "place": "Jabloňov"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Hamry nad Sázavou"
         }
+      ],
+      "last_schedule_check": "2026-04-19",
+      "categories": {
+        "Muži": "3B",
+        "Ženy": "2B"
+      }
+    },
+    "excr": {
+      "display_name": "EXČR",
+      "full_league_name": "Extraliga ČR",
+      "start_year": 1996,
+      "active": true,
+      "pending_competitions": [
+        {
+          "date": "2026-06-13",
+          "place": "Netín"
+        },
+        {
+          "date": "2026-06-14",
+          "place": "Maršovice"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Plumlov"
+        },
+        {
+          "date": "2026-06-21",
+          "place": "Radíkov"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Bílovice"
+        },
+        {
+          "date": "2026-07-05",
+          "place": "Karolín"
+        },
+        {
+          "date": "2026-07-18",
+          "place": "Letohrad - Orlice"
+        },
+        {
+          "date": "2026-07-19",
+          "place": "Letohrad - Kunčice"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Budíkovice"
+        },
+        {
+          "date": "2026-07-26",
+          "place": "Únětice"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Nevcehle"
+        },
+        {
+          "date": "2026-08-09",
+          "place": "Stará Říše"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Pšánky"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Zderaz"
+        }
+      ],
+      "last_schedule_check": "2026-04-20"
+    },
+    "vcbl": {
+      "display_name": "VCB",
+      "full_league_name": "Velká cena Blanenska v PÚ",
+      "start_year": 2002,
+      "active": true,
+      "pending_competitions": [
+        {
+          "date": "2026-05-17",
+          "place": "Žernovník"
+        },
+        {
+          "date": "2026-05-24",
+          "place": "Senetářov"
+        },
+        {
+          "date": "2026-06-07",
+          "place": "Sudice"
+        },
+        {
+          "date": "2026-06-14",
+          "place": "Pamětice"
+        },
+        {
+          "date": "2026-06-28",
+          "place": "Ostrov u Macochy"
+        },
+        {
+          "date": "2026-07-12",
+          "place": "Žďár"
+        },
+        {
+          "date": "2026-07-26",
+          "place": "Černovice"
+        },
+        {
+          "date": "2026-08-16",
+          "place": "Rudice"
+        },
+        {
+          "date": "2026-08-23",
+          "place": "Kunštát - Sychotín"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Kotvrdovice"
+        },
+        {
+          "date": "2026-09-13",
+          "place": "Lysice"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Bořitov"
+        }
+      ],
+      "last_schedule_check": "2026-04-20"
+    },
+    "plpu": {
+      "display_name": "PLPU",
+      "full_league_name": "Fire night cup",
+      "start_year": 2013,
+      "active": true,
+      "pending_competitions": [],
+      "last_schedule_check": "2026-04-20",
+      "categories": {
+        "Muži": "auto",
+        "Ženy": "2B"
+      }
+    },
+    "fnc": {
+      "display_name": "FNC",
+      "full_league_name": "Fire night cup",
+      "start_year": 2013,
+      "active": false,
+      "pending_competitions": [],
+      "last_schedule_check": null,
+      "categories": {
+        "Muži": "2B",
+        "Ženy": "2B",
+        "Profi": "2B",
+        "PS-12": "2B"
+      }
     }
+  }
 }
