@@ -113,7 +113,7 @@ def _process_year(
         return 0
 
     existing = db.get_existing_competitions(client, display, year)
-    new_rows = [r for r in rows if (r['attack_date'], r['place']) not in existing]
+    new_rows = [r for r in rows if (r['attack_date'], r['place'], r['category']) not in existing]
 
     if not new_rows:
         return 0
@@ -160,6 +160,7 @@ def _refresh_schedule(
 
     # Competitions already in DB for this year
     existing_in_db = db.get_existing_competitions(client, display, year)
+    existing_dates_places = {(d, p) for d, p, _c in existing_in_db}
     # Competitions already known as pending
     pending_dates_places = {
         (e['date'], e['place']) for e in league_cfg.get('pending_competitions', [])
@@ -168,7 +169,7 @@ def _refresh_schedule(
     added = 0
     for entry in schedule:
         key = (entry['date'], entry['place'])
-        if key in existing_in_db:
+        if key in existing_dates_places:
             continue  # already scraped and uploaded
         if key in pending_dates_places:
             continue  # already tracked as pending
@@ -289,11 +290,12 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
                 if uploaded > 0:
                     # Find which overdue competitions now have results in DB
                     existing = db.get_existing_competitions(client, display, year)
+                    existing_dates_places = {(d, p) for d, p, _c in existing}
                     still_pending = [
                         e for e in pending
                         if not (
                             date.fromisoformat(e['date']) <= today
-                            and (e['date'], e['place']) in existing
+                            and (e['date'], e['place']) in existing_dates_places
                         )
                     ]
                     removed = len(pending) - len(still_pending)
@@ -387,7 +389,7 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
                 continue
 
             existing = db.get_existing_competitions(client, display, year)
-            new_rows = [r for r in rows if (r['attack_date'], r['place']) not in existing]
+            new_rows = [r for r in rows if (r['attack_date'], r['place'], r['category']) not in existing]
 
             if not new_rows:
                 print(f'  [{display} {year}] No new rows')

@@ -1,7 +1,4 @@
 {
-  "category_aliases": {
-    "Finále": "Ostatní"
-  },
   "categories": {
     "Muži": "testing",
     "Ženy": "testing",
@@ -9,9 +6,11 @@
     "Juniorky": "testing",
     "Dorostenci": "testing",
     "Muži>35": "testing",
-    "Finále": "auto",
-    "Profi": "testing",
-    "PS-12": "testing"
+    "Finále": "Ostatní",
+    "Profi": "Ostatní",
+    "PS-12": "Ostatní",
+    "Děti-mladší": "Ostatní",
+    "Děti-starší": "Ostatní"
   },
   "leagues": {
     "zl": {
@@ -214,10 +213,16 @@
       "last_schedule_check": null,
       "categories": {
         "Muži": "2B",
-        "Ženy": "2B",
-        "Profi": "2B",
-        "PS-12": "2B"
+        "Ženy": "2B"
       }
+    },
+    "hbmh": {
+      "display_name": "HBMH",
+      "full_league_name": "Havlíčobrodské turné mladých hasičů",
+      "start_year": 2022,
+      "active": true,
+      "pending_competitions": [],
+      "last_schedule_check": null
     }
   }
 }

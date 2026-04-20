@@ -54,18 +54,18 @@ def get_existing_competitions(
     client: Client,
     league_display: str,
     year: int,
-) -> set[tuple[str, str]]:
-    """Return (attack_date, place) pairs already present in the DB.
+) -> set[tuple[str, str, str]]:
+    """Return (attack_date, place, category) triples already present in the DB.
 
     Only rows matching the given league and calendar year are considered.
     Paginates automatically so years with many rows are fully covered.
     """
-    existing: set[tuple[str, str]] = set()
+    existing: set[tuple[str, str, str]] = set()
     offset = 0
     while True:
         result = (
             client.table(_TABLE)
-            .select('attack_date, place')
+            .select('attack_date, place, category')
             .eq('league', league_display)
             .gte('attack_date', f'{year}-01-01')
             .lte('attack_date', f'{year}-12-31')
@@ -73,7 +73,7 @@ def get_existing_competitions(
             .execute()
         )
         for row in result.data:
-            existing.add((row['attack_date'], row['place']))
+            existing.add((row['attack_date'], row['place'], row['category']))
         if len(result.data) < _PAGE_SIZE:
             break
         offset += _PAGE_SIZE

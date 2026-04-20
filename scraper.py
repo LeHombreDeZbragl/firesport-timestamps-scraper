@@ -7,7 +7,8 @@ a CSV with columns:
 
 The attack_type (2B or 3B) is resolved via a three-tier lookup:
   1. Per-league override in config.json ("categories" inside the league entry).
-     Use the special value "auto" to parse the type directly from the HTML heading.
+     Use "ignore" to blacklist a category, or "auto" to parse the type directly 
+     from the HTML heading.
   2. Global default in config.json top-level "categories".
   3. Interactive prompt (debug mode) or warning+skip (automated mode).
 
@@ -163,6 +164,7 @@ def resolve_attack_type(
          warn and return None (rows skipped by the caller).
 
     Mode values accepted at tiers 1 and 2:
+      'ignore'   Blacklist — skip all rows for this category silently.
       'testing'  Parse NxB from the h3 heading and WARN when the pattern is
                  not found.  Use this as the discovery default for a new league.
                  Also subject to backfill conflict detection.
@@ -170,7 +172,9 @@ def resolve_attack_type(
                  pattern is absent (rows skipped quietly).  Exempt from backfill
                  conflict detection.  Use once intentional type variation is
                  confirmed.
-      '2B'/'3B'  Fixed value — always returned as-is, no parsing.
+      Fixed value (e.g. '2B', '3B', 'Ostatní')
+                 Any other string is returned as-is, no parsing. Use 'Ostatní'
+                 (Czech: "Other") for categories that don't fit standard types.
     """
     def _parse_or_warn(mode: str, tier_label: str) -> str | None:
         attack_type = parse_attack_type_from_h3(h3_text)
@@ -187,6 +191,8 @@ def resolve_attack_type(
     # 1. Per-league override
     if category in league_categories:
         league_val = league_categories[category]
+        if league_val == 'ignore':
+            return None  # blacklisted — skip rows silently
         if league_val in ('auto', 'testing'):
             result = _parse_or_warn(league_val, 'per-league')
             if result:
@@ -200,6 +206,8 @@ def resolve_attack_type(
     # 2. Global default
     if category in global_categories:
         global_val = global_categories[category]
+        if global_val == 'ignore':
+            return None  # blacklisted — skip rows silently
         if global_val in ('auto', 'testing'):
             result = _parse_or_warn(global_val, 'global')
             if result:
