@@ -130,10 +130,19 @@ def get_league_categories(config: dict, league_key: str) -> dict:
     )
 
 
-def get_category(h3_text: str) -> str:
-    """Return the first word of the category h3 (e.g. 'Muži', 'Ženy')."""
+def get_category(h3_text: str, compound_prefixes: set[str] | None = None) -> str:
+    """Return the category name extracted from the h3 heading.
+
+    For single-word categories (e.g. 'Muži', 'Ženy') returns the first word.
+    If the first word is listed in *compound_prefixes* and a second word exists,
+    returns the first two words (e.g. 'Smíšený dorost').
+    """
     words = h3_text.strip().split()
-    return words[0] if words else ''
+    if not words:
+        return ''
+    if compound_prefixes and words[0] in compound_prefixes and len(words) >= 2:
+        return f'{words[0]} {words[1]}'
+    return words[0]
 
 
 def parse_attack_type_from_h3(h3_text: str) -> str | None:
@@ -165,13 +174,14 @@ def resolve_attack_type(
 
     Mode values accepted at tiers 1 and 2:
       'ignore'   Blacklist — skip all rows for this category silently.
-      'testing'  Parse NxB from the h3 heading and WARN when the pattern is
-                 not found.  Use this as the discovery default for a new league.
-                 Also subject to backfill conflict detection.
-      'auto'     Parse NxB from the h3 heading silently — no warning when the
-                 pattern is absent (rows skipped quietly).  Exempt from backfill
-                 conflict detection.  Use once intentional type variation is
-                 confirmed.
+      'testing'  Parse NxB from the h3 heading; WARN and fall back to
+                 'Ostatní' when the pattern is not found.  Use this as the
+                 discovery default for a new league.  Also subject to backfill
+                 conflict detection.
+      'auto'     Parse NxB from the h3 heading silently; fall back to
+                 'Ostatní' when the pattern is absent (no warning).  Exempt
+                 from backfill conflict detection.  Use once intentional type
+                 variation is confirmed.
       Fixed value (e.g. '2B', '3B', 'Ostatní')
                  Any other string is returned as-is, no parsing. Use 'Ostatní'
                  (Czech: "Other") for categories that don't fit standard types.
@@ -197,9 +207,7 @@ def resolve_attack_type(
             result = _parse_or_warn(league_val, 'per-league')
             if result:
                 return result
-            if league_val == 'testing':
-                return None  # already warned, skip rows
-            # 'auto': fall through to global default silently
+            return 'Ostatní'  # no NxB pattern found
         else:
             return league_val
 
@@ -212,9 +220,7 @@ def resolve_attack_type(
             result = _parse_or_warn(global_val, 'global')
             if result:
                 return result
-            if global_val == 'testing':
-                return None  # already warned, skip rows
-            # 'auto': fall through to tier 3 silently
+            return 'Ostatní'  # no NxB pattern found
         else:
             return global_val
 
@@ -319,6 +325,7 @@ def scrape_html(
     full_config: dict | None = None,
     full_league_name: str = '',
     category_aliases: dict | None = None,
+    compound_prefixes: set[str] | None = None,
 ) -> list:
     """Parse HTML content string and return all extracted result rows.
 
@@ -336,6 +343,8 @@ def scrape_html(
         full_league_name:  Full human-readable league name for the DB column.
         category_aliases:  Mapping of raw category names to display names
                            (e.g. {"Finále": "Ostatní"}).
+        compound_prefixes: Set of first words that form two-word category names
+                           (e.g. {"Smíšený"} → "Smíšený dorost").
     """
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -381,7 +390,7 @@ def scrape_html(
 
         for h3, table in zip(cat_h3s, data_tables):
             h3_text = h3.get_text(strip=True)
-            category = get_category(h3_text)
+            category = get_category(h3_text, compound_prefixes)
             if category_aliases:
                 category = category_aliases.get(category, category)
             attack_type = resolve_attack_type(

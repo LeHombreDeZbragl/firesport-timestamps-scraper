@@ -82,6 +82,7 @@ def _process_year(
     global_categories: dict,
     year: int,
     category_aliases: dict | None = None,
+    compound_prefixes: set | None = None,
 ) -> int:
     """Download, scrape, diff, and upload for one league + year.
 
@@ -107,6 +108,7 @@ def _process_year(
         interactive=False,
         full_league_name=full_league_name,
         category_aliases=aliases,
+        compound_prefixes=compound_prefixes,
     )
 
     if not rows:
@@ -285,6 +287,7 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
                 uploaded = _process_year(
                     client, league_key, league_cfg, global_categories, year,
                     category_aliases=config.get('category_aliases', {}),
+                    compound_prefixes=set(config.get('compound_category_prefixes', [])),
                 )
 
                 if uploaded > 0:
@@ -382,6 +385,7 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
                 league_categories,
                 interactive=False,
                 full_league_name=full_league_name,
+                compound_prefixes=set(config.get('compound_category_prefixes', [])),
             )
 
             if not rows:

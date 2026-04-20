@@ -1,16 +1,22 @@
 {
+  "compound_category_prefixes": ["Smíšený"],
+  "category_aliases": {
+    "Smíšený dorost": "Ostatní"
+  },
   "categories": {
     "Muži": "testing",
-    "Ženy": "testing",
+    "Ženy": "2B",
     "Junioři": "testing",
-    "Juniorky": "testing",
-    "Dorostenci": "testing",
+    "Juniorky": "2B",
     "Muži>35": "testing",
+    "Smíšený dorost": "2B",
+    "Dorostenci": "2B",
     "Finále": "Ostatní",
     "Profi": "Ostatní",
     "PS-12": "Ostatní",
     "Děti-mladší": "Ostatní",
-    "Děti-starší": "Ostatní"
+    "Děti-starší": "Ostatní",
+    "Přípravka": "Ostatní"
   },
   "leagues": {
     "bhl": {
@@ -19,7 +25,10 @@
       "start_year": 2008,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": null,
+      "categories": {
+        "Muži": "3B"
+      }
     },
     "bl": {
       "display_name": "BL",
@@ -35,7 +44,10 @@
       "start_year": 2012,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": null,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "bp": {
       "display_name": "BP",
