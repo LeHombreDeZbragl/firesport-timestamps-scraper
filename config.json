@@ -1,5 +1,7 @@
 {
-  "compound_category_prefixes": ["Smíšený"],
+  "compound_category_prefixes": [
+    "Smíšený"
+  ],
   "category_aliases": {
     "Smíšený dorost": "Ostatní"
   },
@@ -25,7 +27,7 @@
       "start_year": 2008,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null,
+      "last_schedule_check": "2026-04-21",
       "categories": {
         "Muži": "3B"
       }
@@ -35,8 +37,61 @@
       "full_league_name": "Brdská liga",
       "start_year": 2013,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-06",
+          "place": "Aréna Zalužany"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Kameňák aréna Hvozdec"
+        },
+        {
+          "date": "2026-06-28",
+          "place": "Kameňák aréna Hvozdec"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Hřiště TJ Sokol Daleké Dušníky"
+        },
+        {
+          "date": "2026-07-05",
+          "place": "Hřiště TJ Sokol Daleké Dušníky"
+        },
+        {
+          "date": "2026-07-18",
+          "place": "Sportovní areál Broumy"
+        },
+        {
+          "date": "2026-07-19",
+          "place": "Sportovní areál Broumy"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Hřiště Vranovice"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Hřiště Vranovice"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Tréninkové hřiště TJ Tatran"
+        },
+        {
+          "date": "2026-08-16",
+          "place": "Tréninkové hřiště TJ Tatran"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Hřiště Radíč"
+        },
+        {
+          "date": "2026-09-13",
+          "place": "Hřiště Radíč"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "bnl": {
       "display_name": "BNL",
@@ -44,7 +99,7 @@
       "start_year": 2012,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null,
+      "last_schedule_check": "2026-04-21",
       "categories": {
         "Muži": "auto"
       }
@@ -54,8 +109,53 @@
       "full_league_name": "Boleslavský pohár",
       "start_year": 2016,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-02",
+          "place": "Nová Ves u Bakova - fotbalové hřiště"
+        },
+        {
+          "date": "2026-05-16",
+          "place": "Veselá - školní hřiště"
+        },
+        {
+          "date": "2026-05-23",
+          "place": "Dlouhá Lhota - fot. hřiště"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Židněves - fotbalové hřiště"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Chotětov - fotbalové hřiště"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Sukorady - fotbalové hřiště"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Bakov nad Jizerou"
+        },
+        {
+          "date": "2026-09-05",
+          "place": "Židněves - fotbalové hřiště"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Kosořice - hasičské hřiště"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Chotětov - fotbalové hřiště"
+        },
+        {
+          "date": "2026-09-20",
+          "place": "Kosmonosy - fotbalové hřiště"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "chl": {
       "display_name": "CHL",
@@ -63,7 +163,7 @@
       "start_year": 2016,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "chnhl": {
       "display_name": "CHNHL",
@@ -71,7 +171,7 @@
       "start_year": 2017,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "excr": {
       "display_name": "EXČR",
@@ -155,16 +255,114 @@
       "full_league_name": "4FIRE Grand Prix Hodonín",
       "start_year": 1997,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-02",
+          "place": "Vlkoš - fotb.hřiště"
+        },
+        {
+          "date": "2026-06-07",
+          "place": "Svatobořice - hasičský areál"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Čeložnice - has. areál"
+        },
+        {
+          "date": "2026-06-14",
+          "place": "Ratíškovice - fotba.hřiště"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Petrov u koupaliště"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Rohatec - u základní školy"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Vracov - fotb. hřiště"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Skoronice - u hasičské zbr."
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Žádovice - sportovní areál"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Hrozn. Lhota - za školou"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Hrubá Vrbka - has. areál"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Vel. nad Veličkou - náměstí"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Kozojídky - fotb. hřiště"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "hbhl": {
       "display_name": "HBHL",
       "full_league_name": "Havlíčkobrodská liga",
       "start_year": 1999,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-30",
+          "place": "Habry"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Seč"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Nová Ves u Světlé"
+        },
+        {
+          "date": "2026-07-05",
+          "place": "Žižkovo Pole"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Kámen"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Kynice"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Batelov (SDH Milíčov)"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Pohled"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Smilov"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Uhelná Příbram (SDH Petrovice)"
+        },
+        {
+          "date": "2026-09-26",
+          "place": "Česká Bělá"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "hbmh": {
       "display_name": "HBMH",
@@ -172,7 +370,7 @@
       "start_year": 2022,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "he": {
       "display_name": "HE",
@@ -180,7 +378,7 @@
       "start_year": 2008,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "hpl": {
       "display_name": "HPL",
@@ -188,15 +386,68 @@
       "start_year": 2021,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "jchl": {
       "display_name": "JCHL",
       "full_league_name": "Jihočeská hasičská liga",
       "start_year": 2000,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-23",
+          "place": "Ledenice"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Třísov"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Třebín"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Vlkovice"
+        },
+        {
+          "date": "2026-06-21",
+          "place": "Srubec"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Křenovice"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Omlenice"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Kájov"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Soběnov"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Chlum"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Malešice"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Mydlovary"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Lišov"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "jhhl": {
       "display_name": "JHHL",
@@ -211,16 +462,110 @@
       "full_league_name": "Jizerská liga",
       "start_year": 2007,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-08",
+          "place": "Košťálov"
+        },
+        {
+          "date": "2026-05-16",
+          "place": "Pěnčín"
+        },
+        {
+          "date": "2026-05-23",
+          "place": "Bechov"
+        },
+        {
+          "date": "2026-05-24",
+          "place": "Libuň"
+        },
+        {
+          "date": "2026-05-30",
+          "place": "Radimovice"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Sychrov"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Krásná Ves"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Dubenec"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Malá Skála"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Jirkov"
+        },
+        {
+          "date": "2026-08-23",
+          "place": "Dneboh"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Tanvald"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Kosmonosy"
+        },
+        {
+          "date": "2026-09-26",
+          "place": "Ploukonice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "jlns": {
       "display_name": "JLNS",
       "full_league_name": "Jihovalašská liga nočních soutěží",
       "start_year": 2013,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-06",
+          "place": "Křekov - hřiště Lipina"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Lipová"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Rudimov"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Popov - hřiště Štítná n. Vláří"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Nedašova Lhota"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Nevšová - JLNS"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Vysoké Pole"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Vrbětice - JLNS"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Mirošov - JLNS"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "jol": {
       "display_name": "JOL",
@@ -235,8 +580,53 @@
       "full_league_name": "Krušnohorská liga",
       "start_year": 1997,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-23",
+          "place": "Štrbice"
+        },
+        {
+          "date": "2026-05-30",
+          "place": "Lhenice"
+        },
+        {
+          "date": "2026-05-31",
+          "place": "Peruc"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Großolbersdorf , dvojkolo"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Slavětín"
+        },
+        {
+          "date": "2026-06-28",
+          "place": "Brozany"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Černčice"
+        },
+        {
+          "date": "2026-07-12",
+          "place": "Podsedice"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Nové Dvory, dvojkolo"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Jimlín, dvojkolo"
+        },
+        {
+          "date": "2026-09-13",
+          "place": "Touchovice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "lpo": {
       "display_name": "LPO",
@@ -259,8 +649,49 @@
       "full_league_name": "Moravský pohár - liga MHJ a PRL v požárním útoku",
       "start_year": 2020,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-02",
+          "place": "Fotbalové hřiště Chropyně"
+        },
+        {
+          "date": "2026-05-09",
+          "place": "Seloutky"
+        },
+        {
+          "date": "2026-05-23",
+          "place": "Litenčice hřiště"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Počenice -fotbalové hřiště"
+        },
+        {
+          "date": "2026-06-11",
+          "place": "fotbalové hřiště Uhřičice"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Rychlov  Skála"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Kulturní areál Kokory"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Lobodice-hasičský areál"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "výkleky hasičský areál"
+        },
+        {
+          "date": "2026-09-05",
+          "place": "Medlov arela TJ u vodní nádrže"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "msp": {
       "display_name": "MSP",
@@ -283,16 +714,98 @@
       "full_league_name": "Olomoucká noční liga",
       "start_year": 2017,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-29",
+          "place": "Odry"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Bílovice"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Kožušany"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Drahanovice"
+        },
+        {
+          "date": "2026-07-31",
+          "place": "Olešnice"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Měrotín"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Mladeč"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Třeština"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "oph": {
       "display_name": "OPH",
       "full_league_name": "O pohár Hořiny",
       "start_year": 2007,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-16",
+          "place": "Ves Touškov"
+        },
+        {
+          "date": "2026-05-23",
+          "place": "Tlumačov"
+        },
+        {
+          "date": "2026-05-30",
+          "place": "Březí"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Honezovice"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Újezd"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Oprechtice - hřiště Zahořany"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Všekary - hasičské hřiště"
+        },
+        {
+          "date": "2026-07-18",
+          "place": "Krchleby"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Strýčkovice"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Kostelec"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Neuměř"
+        },
+        {
+          "date": "2026-09-05",
+          "place": "Srbice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "oshklatovy": {
       "display_name": "OSHK",
@@ -308,31 +821,138 @@
       "start_year": 2013,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "pehl": {
       "display_name": "PEHL",
       "full_league_name": "Pelhřimovská hasičská liga",
       "start_year": 2009,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-06",
+          "place": "Buřenice"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Červená Řečice"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Samšín"
+        },
+        {
+          "date": "2026-07-31",
+          "place": "Pacov"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Samšín - Přáslavice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "phl": {
       "display_name": "PHL",
       "full_league_name": "Podhostýnská hasičská liga",
       "start_year": 2003,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-16",
+          "place": "Vrchoslavice"
+        },
+        {
+          "date": "2026-05-30",
+          "place": "Ludslavice"
+        },
+        {
+          "date": "2026-06-28",
+          "place": "Pravčice"
+        },
+        {
+          "date": "2026-07-05",
+          "place": "Karolín"
+        },
+        {
+          "date": "2026-07-18",
+          "place": "Roštění"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Záhlinice"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Křenovice"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Nětčice"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Nová Dědina"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "pkl": {
       "display_name": "PKL",
       "full_league_name": "Podkozákovská hasičská liga",
       "start_year": 2013,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-02",
+          "place": "Smidary"
+        },
+        {
+          "date": "2026-05-08",
+          "place": "Košťálov"
+        },
+        {
+          "date": "2026-05-09",
+          "place": "Doubrava"
+        },
+        {
+          "date": "2026-05-16",
+          "place": "Pěnčín - Huť"
+        },
+        {
+          "date": "2026-05-17",
+          "place": "Velké Hamry"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Krásná Ves"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Jílové u Držkova"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Nová Ves u Chrastavy"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Dolní Pertoltice"
+        },
+        {
+          "date": "2026-08-09",
+          "place": "Karlinky"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Raspenava"
+        },
+        {
+          "date": "2026-09-26",
+          "place": "Ploukonice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "pl": {
       "display_name": "PL",
@@ -355,8 +975,53 @@
       "full_league_name": "Podorlická hasičská liga",
       "start_year": 2023,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-08",
+          "place": "Houdkovice"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Havlovice"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Semechnice"
+        },
+        {
+          "date": "2026-06-21",
+          "place": "Vrbice"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Častolovice"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Sněžné"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Kvasiny"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Lukavice"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Nový Hrádek"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Ohnišov"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Bukovice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "plpu": {
       "display_name": "PLPU",
@@ -383,16 +1048,98 @@
       "full_league_name": "Šumavská hasičská liga",
       "start_year": 2006,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-13",
+          "place": "Vacov"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Budilov"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Benešova Hora"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Horní Poříčí"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Dolany"
+        },
+        {
+          "date": "2026-09-20",
+          "place": "Žihobce"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "tcl": {
       "display_name": "TCL",
       "full_league_name": "Tachovské Ligy",
       "start_year": 2018,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-09",
+          "place": "Stráž-  dětské hřiště"
+        },
+        {
+          "date": "2026-05-30",
+          "place": "Bor -  náhradní hřiště"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Damnov - hřiště"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Černošín - hřiště"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Planá-  stadion"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Staré Sedliště-  náhr. hřiště"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Cebiv - hřiště u restaurace"
+        },
+        {
+          "date": "2026-07-18",
+          "place": "Nahý Újezdec - hřiště"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Halže -  fotbalové hřiště"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Nové Sedliště-  areál SDH"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Hošťka-  hřiště"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Stříbro-  hasičské cvičiště"
+        },
+        {
+          "date": "2026-09-05",
+          "place": "Bezdružice"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Kladruby- fotbalové hřiště"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "thl": {
       "display_name": "THL",
@@ -400,15 +1147,108 @@
       "start_year": 2009,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "trl": {
       "display_name": "TRL",
       "full_league_name": "Třebíčská liga",
       "start_year": 1996,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-09",
+          "place": "Častohostice"
+        },
+        {
+          "date": "2026-05-10",
+          "place": "Šebkovice"
+        },
+        {
+          "date": "2026-05-30",
+          "place": "Kojetice"
+        },
+        {
+          "date": "2026-05-31",
+          "place": "Předín"
+        },
+        {
+          "date": "2026-05-31",
+          "place": "Myslibořice"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Bransouze"
+        },
+        {
+          "date": "2026-06-07",
+          "place": "Výčapy"
+        },
+        {
+          "date": "2026-06-14",
+          "place": "Lipník"
+        },
+        {
+          "date": "2026-06-14",
+          "place": "Kněžice"
+        },
+        {
+          "date": "2026-06-21",
+          "place": "Číhalín"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Hvězdoňovice"
+        },
+        {
+          "date": "2026-07-26",
+          "place": "Budíkovice"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Litovany"
+        },
+        {
+          "date": "2026-08-23",
+          "place": "Sokolí"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Stařeč"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Budíkovice"
+        },
+        {
+          "date": "2026-09-05",
+          "place": "Markvartice"
+        },
+        {
+          "date": "2026-09-06",
+          "place": "Trnava"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Kněžice"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Lipník"
+        },
+        {
+          "date": "2026-09-13",
+          "place": "Stařeč"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Markvartice"
+        },
+        {
+          "date": "2026-09-20",
+          "place": "Výčapy"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "vcbl": {
       "display_name": "VCB",
@@ -472,24 +1312,175 @@
       "full_league_name": "Východočeská hasičská liga",
       "start_year": 2013,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-05-02",
+          "place": "Smidary"
+        },
+        {
+          "date": "2026-05-09",
+          "place": "Žďár - Doubrava"
+        },
+        {
+          "date": "2026-05-17",
+          "place": "Nahořany"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Havlovice"
+        },
+        {
+          "date": "2026-06-21",
+          "place": "Bystřec"
+        },
+        {
+          "date": "2026-06-28",
+          "place": "Velichovky"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Dubenec"
+        },
+        {
+          "date": "2026-07-19",
+          "place": "Letohrad Kunčice"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Všeň - Ploukonice"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Tatobity"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Pšánky"
+        },
+        {
+          "date": "2026-09-13",
+          "place": "Myštěves"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "vcos": {
       "display_name": "VCOS",
       "full_league_name": "Velká cena okresu Šumperk",
       "start_year": 2014,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-06",
+          "place": "Dolní Studénky"
+        },
+        {
+          "date": "2026-06-07",
+          "place": "Hrabová"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Nový Malín"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Zvole - VC Veteráni"
+        },
+        {
+          "date": "2026-06-28",
+          "place": "Brníčko"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Nemrlov"
+        },
+        {
+          "date": "2026-07-12",
+          "place": "Štíty"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Bludov"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Bratrušov - VC Veteráni"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Hrabišín"
+        },
+        {
+          "date": "2026-08-09",
+          "place": "Třeština"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Sobotín"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Brníčko"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "vcov": {
       "display_name": "VCOV",
       "full_league_name": "Velká cena okresu Vyškov",
       "start_year": 2012,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-06",
+          "place": "Radslavice"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Křenovice"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Hlubočany"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Topolany"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Kučerov"
+        },
+        {
+          "date": "2026-07-12",
+          "place": "Moravské Prusy"
+        },
+        {
+          "date": "2026-08-08",
+          "place": "Habrovany"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Hodějice"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Ivanovice na Hané"
+        },
+        {
+          "date": "2026-08-23",
+          "place": "Tvarožná"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Tučapy"
+        },
+        {
+          "date": "2026-09-05",
+          "place": "Mokrá-Horákov"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "vcpr": {
       "display_name": "VCPR",
@@ -497,23 +1488,77 @@
       "start_year": 2003,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "vcpv": {
       "display_name": "VCPV",
       "full_league_name": "Velká cena Prostějovska",
       "start_year": 2010,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-27",
+          "place": "Bílovice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "vct": {
       "display_name": "VCT",
       "full_league_name": "Velká cena Třeboňska",
       "start_year": 2011,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-06-06",
+          "place": "Lomnice nad Lužnicí"
+        },
+        {
+          "date": "2026-06-13",
+          "place": "Staňkov"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Chlum u Třeboně"
+        },
+        {
+          "date": "2026-06-27",
+          "place": "Lásenice"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Mníšek"
+        },
+        {
+          "date": "2026-07-25",
+          "place": "Slavonice"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Adamov"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Rapšach"
+        },
+        {
+          "date": "2026-08-22",
+          "place": "Olešnice"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Hamr"
+        },
+        {
+          "date": "2026-09-05",
+          "place": "Dolní Žďár - Horní Lhota"
+        },
+        {
+          "date": "2026-09-19",
+          "place": "Chlum u Třeboně"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "vcu": {
       "display_name": "VCU",
@@ -521,15 +1566,60 @@
       "start_year": 2008,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "vcuh": {
       "display_name": "VCUH",
       "full_league_name": "Velká cena OSH ČMS Uh.Hradiště",
       "start_year": 1990,
       "active": true,
-      "pending_competitions": [],
-      "last_schedule_check": null
+      "pending_competitions": [
+        {
+          "date": "2026-04-26",
+          "place": "Kunovice"
+        },
+        {
+          "date": "2026-06-06",
+          "place": "Vésky"
+        },
+        {
+          "date": "2026-06-07",
+          "place": "Svatobořice"
+        },
+        {
+          "date": "2026-06-21",
+          "place": "Okresní kolo - Mistřice"
+        },
+        {
+          "date": "2026-06-28",
+          "place": "Tučapy"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Částkov"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Březolupy"
+        },
+        {
+          "date": "2026-07-19",
+          "place": "Salaš"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Mistřice"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Staré Město"
+        },
+        {
+          "date": "2026-08-15",
+          "place": "Sušice"
+        }
+      ],
+      "last_schedule_check": "2026-04-21"
     },
     "vhl": {
       "display_name": "VHL",
@@ -537,7 +1627,7 @@
       "start_year": 2012,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "zchl": {
       "display_name": "ZCHL",
@@ -553,7 +1643,7 @@
       "start_year": 2004,
       "active": true,
       "pending_competitions": [],
-      "last_schedule_check": null
+      "last_schedule_check": "2026-04-21"
     },
     "zl": {
       "display_name": "ŽL",
