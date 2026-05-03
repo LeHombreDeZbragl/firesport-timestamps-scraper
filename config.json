@@ -1314,10 +1314,6 @@
       "active": true,
       "pending_competitions": [
         {
-          "date": "2026-05-02",
-          "place": "Smidary"
-        },
-        {
           "date": "2026-05-09",
           "place": "Žďár - Doubrava"
         },
@@ -1694,9 +1690,57 @@
         {
           "date": "2026-09-19",
           "place": "Hamry nad Sázavou"
+        },
+        {
+          "date": "2025-05-10",
+          "place": "Maršovice"
+        },
+        {
+          "date": "2025-05-31",
+          "place": "Meziříčko"
+        },
+        {
+          "date": "2025-06-07",
+          "place": "Lavičky"
+        },
+        {
+          "date": "2025-06-08",
+          "place": "Radostín nad Oslavou"
+        },
+        {
+          "date": "2025-06-28",
+          "place": "Jabloňov"
+        },
+        {
+          "date": "2025-08-02",
+          "place": "Otín"
+        },
+        {
+          "date": "2025-08-03",
+          "place": "Netín"
+        },
+        {
+          "date": "2025-08-16",
+          "place": "Nové Veselí"
+        },
+        {
+          "date": "2025-08-17",
+          "place": "Zbraslav"
+        },
+        {
+          "date": "2025-09-13",
+          "place": "Lhotky Sport"
+        },
+        {
+          "date": "2025-09-14",
+          "place": "Hamry nad Sázavou"
+        },
+        {
+          "date": "2025-09-20",
+          "place": "Jasenice"
         }
       ],
-      "last_schedule_check": "2026-04-19",
+      "last_schedule_check": "2026-05-03",
       "categories": {
         "Muži": "3B",
         "Ženy": "2B"
