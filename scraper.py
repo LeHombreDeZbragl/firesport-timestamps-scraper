@@ -148,10 +148,15 @@ def get_category(h3_text: str, compound_prefixes: set[str] | None = None) -> str
 def parse_attack_type_from_h3(h3_text: str) -> str | None:
     """Extract attack type from an h3 heading text.
 
-    Looks for patterns like '3xB' or '2xB' (case-insensitive) and converts
-    them to '3B' / '2B'.  Returns None if no such pattern is found.
+    Looks for patterns like '3xB', '2xB' (NxB format) or '2B', '3B' (NB format)
+    (case-insensitive) and converts them to '3B' / '2B'.  Returns None if no
+    such pattern is found.
+
+    Examples:
+        '2xB' → '2B'
+        '3B' → '3B'
     """
-    m = re.search(r'(\d)xB', h3_text, re.IGNORECASE)
+    m = re.search(r'(\d)(?:x)?B', h3_text, re.IGNORECASE)
     return f'{m.group(1)}B' if m else None
 
 
