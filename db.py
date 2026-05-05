@@ -131,14 +131,36 @@ _NULLABLE_FLOAT_COLS = ('lp', 'pp')
 def _prepare_records(records: list[dict]) -> list[dict]:
     """Coerce record values to types the DB schema expects.
 
-    - lp / pp: empty string → None  (DB columns are real / float, not text)
+    - lp / pp: empty string → None; values >= 60 → None (DB columns are real / float)
+    - placement: values > 999 → None (DB column is smallint with max value 999)
     """
     out = []
     for rec in records:
         row = dict(rec)
+        
+        # Handle lp and pp: convert empty strings to None, and clamp values >= 60 to None
         for col in _NULLABLE_FLOAT_COLS:
-            if col in row and row[col] == '':
-                row[col] = None
+            if col in row:
+                val = row[col]
+                if val == '' or val is None:
+                    row[col] = None
+                else:
+                    try:
+                        float_val = float(val)
+                        if float_val >= 60:
+                            row[col] = None
+                    except (ValueError, TypeError):
+                        row[col] = None
+        
+        # Handle placement: if value > 999, set to None
+        if 'placement' in row and row['placement']:
+            try:
+                placement_int = int(row['placement'])
+                if placement_int > 999:
+                    row['placement'] = None
+            except (ValueError, TypeError):
+                pass  # Keep original value if it can't be converted to int
+        
         out.append(row)
     return out
 
