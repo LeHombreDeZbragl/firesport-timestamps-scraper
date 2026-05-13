@@ -129,13 +129,17 @@ The top-level coordinator. Calls downloader → scraper → db in sequence.
 
 #### Daily mode (default)
 
-For each active league, checks the current year and the previous year:
+For every league in `config.json`, checks all years from `last_scraped_year + 1` up to the current year (falls back to `start_year` when `last_scraped_year` is null). Per year:
 
-- **Has overdue pending competitions** (date ≤ today, not yet in DB)? → Download and scrape the year page. Upload any new rows found. Remove resolved competitions from `pending_competitions`. If the page has no results yet (data not published), leave the entry in pending and retry on the next run.
-- **All pending competitions are in the future?** → Skip (nothing to scrape yet).
-- **No pending competitions at all?** → Refresh the schedule from the website, but only if `last_schedule_check` is older than 14 days (avoids hammering the site every run). New competitions found are added to `pending_competitions`.
+- **Has overdue pending competitions** (date ≤ today, not yet in DB)? → Download and scrape the year page. Upload any new rows found. Remove resolved competitions from `pending_competitions`. If results are not published yet, leave the entry in pending and retry on the next run.
+- **All pending competitions are in the future?** → Skip that year.
+- **No pending competitions at all?** → Refresh the schedule from the website if `next_schedule_check` is today or in the past. New competitions found are added to `pending_competitions`.
 
-After each run, `config.json` is saved if anything changed (pending list or schedule check date). The GitHub Actions workflow commits this file back to the repo.
+The schedule-refresh gate is checked **once per league** (not per year), so both the current and previous year are refreshed on the same run when due. After a refresh, `next_schedule_check` is set to `today + randint(12, 16)` days, spreading checks across different days over time.
+
+After the year loop, `last_scraped_year` is advanced for every sequential past year whose pending list is fully empty, and stale pending entries are pruned automatically.
+
+After each run, `config.json` is saved if anything changed. The GitHub Actions workflow commits this file back to the repo.
 
 #### Backfill mode
 
@@ -146,6 +150,8 @@ python orchestrator.py --backfill --league zl  # one league
 
 Backfill reads the league definitions from `config.json` and processes the specified league(s) from that file.
 Downloads every year from `start_year` to the current year, diffs against the DB, and uploads only new rows. Safe to re-run — it never creates duplicates.
+
+After each successfully uploaded year, `last_scraped_year` is updated in `config.json` immediately so that a mid-run conflict leaves it pointing to the last clean year. After a clean run, `next_schedule_check` is also set.
 
 **Conflict detection** runs before each upload. The scraper tracks which `attack_type` values it has seen for every category — both from the DB (existing data) and from all years already processed in the current run. If a category ever resolves to two different attack types (e.g. `Muži` is `3B` in 2022 but `2B` in 2023, or both within the same year), the backfill:
 
@@ -248,21 +254,25 @@ After each run the workflow auto-commits `config.json` back to `main` if the pen
   },
   "leagues": {
     "zl": {
-      "display_name": "ŽL",   // used as the league value in the DB
+      "display_name": "ŽL",        // used as the league value in the DB
       "full_league_name": "Žďárská liga",  // written to full_league_name column
-      "start_year": 2012,      // earliest year to scrape in backfill
-      "active": true,          // false = skip in daily mode (backfill ignores this)
+      "start_year": 2012,           // earliest year to scrape in backfill
+      // Highest year that is fully scraped. Daily mode checks years after this.
+      // Null = fall back to start_year (triggers a mini-backfill on next daily run).
+      "last_scraped_year": 2025,
       // Competitions known to be scheduled but not yet in the DB.
       // Entries are added during schedule refreshes and removed once
       // results are successfully uploaded.
       "pending_competitions": [
         { "date": "2026-05-30", "place": "Zbraslav" }
       ],
-      // ISO date of last schedule refresh. Null forces a refresh on next run.
-      "last_schedule_check": "2026-04-19"
+      // Absolute date of the next schedule refresh. Null forces a refresh on
+      // next run. Set to today + randint(12, 16) days after each refresh so
+      // checks are spread out rather than clustering on the same day.
+      "next_schedule_check": "2026-05-19"
     },
     "plpu": {
-      // Per-league category override — "auto" parses NxB from the h3 heading.
+      // Per-league category override — "auto" parses NxB/NB from the h3 heading.
       // A fixed value ("2B"/"3B") overrides the global default for that category.
       "categories": { "Muži": "auto" }
     }

@@ -7,10 +7,11 @@ Supabase for all active leagues defined in config.json.
 Modes
 -----
 Daily (default)
-    For each active league, checks the current year and previous year.
-    Uses pending_competitions to decide whether a download + scrape is
-    even needed:
+    For every league in config.json, checks all years from
+    (last_scraped_year + 1) up to the current year.  When
+    last_scraped_year is null the range starts at start_year.
 
+    Per year:
       - If any pending competition date is <= today and not yet in the DB,
         download the year page, scrape it, and upload newly found results.
         A pending entry is only removed once its results are in the DB.
@@ -18,17 +19,23 @@ Daily (default)
         entries stay in pending until data is actually found.
 
       - If no pending competitions exist for the year, re-download the year
-        page and refresh the schedule — but only if last_schedule_check is
-        older than SCHEDULE_CHECK_DAYS days (or has never been done).
+        page and refresh the schedule — but only when next_schedule_check is
+        today or in the past (checked once at league level, not per year).
 
-      - If all pending competition dates are in the future, skip the league
-        (no scraping needed yet).
+      - If all pending competition dates are in the future, skip that year.
+
+    After the year loop:
+      - last_scraped_year is advanced for every past year whose pending list
+        is fully empty, and stale pending entries are pruned.
+      - next_schedule_check is set to today + randint(12, 16) days whenever
+        a schedule refresh was performed (spreads checks over time).
 
 Backfill (--backfill)
     Downloads and scrapes every year from start_year to the current year for
-    every active league, uploading any rows not already in the DB.  Years
-    that yield no tab divs (gap years or future years with no data) are
-    skipped silently.
+    every league, uploading any rows not already in the DB.  Years
+    that yield no rows (gap years or future years with no data) are
+    skipped silently.  Sets last_scraped_year and next_schedule_check in
+    config.json after each league completes.
 
 Usage
 -----
@@ -39,8 +46,9 @@ Usage
 
 import argparse
 import json
+import random
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 import db
@@ -48,9 +56,10 @@ import downloader
 import scraper
 
 _CONFIG_FILE = Path('config.json')
-# Re-download year pages to refresh the schedule after this many days of
-# inactivity when no pending competitions are known.
-_SCHEDULE_CHECK_DAYS = 14
+# next_schedule_check is set to today + randint(MIN, MAX) days after each
+# schedule refresh, spreading checks across different days over time.
+_SCHEDULE_CHECK_DAYS_MIN = 12
+_SCHEDULE_CHECK_DAYS_MAX = 16
 
 
 # ── Config helpers ────────────────────────────────────────────────────────────
@@ -137,13 +146,13 @@ def _refresh_schedule(
     league_key: str,
     league_cfg: dict,
     year: int,
-    today: date,
 ) -> bool:
     """Re-download the year page and update pending_competitions.
 
-    Adds newly discovered future competitions that are not yet in the DB.
-    Updates last_schedule_check to today.
-    Returns True if the config was modified.
+    Adds newly discovered competitions that are not yet in the DB or pending.
+    Does NOT touch next_schedule_check — the caller sets it after all years
+    are processed.
+    Returns True if the config was modified (new entries added).
     """
     display = league_cfg['display_name']
     try:
@@ -157,8 +166,7 @@ def _refresh_schedule(
 
     schedule = scraper.scrape_schedule(html)
     if not schedule:
-        league_cfg['last_schedule_check'] = today.isoformat()
-        return True
+        return False
 
     # Competitions already in DB for this year
     existing_in_db = db.get_existing_competitions(client, display, year)
@@ -180,8 +188,6 @@ def _refresh_schedule(
         )
         added += 1
 
-    league_cfg['last_schedule_check'] = today.isoformat()
-
     if added:
         print(
             f'  [{display} {year}] Schedule refresh: {added} new '
@@ -190,7 +196,7 @@ def _refresh_schedule(
     else:
         print(f'  [{display} {year}] Schedule refresh: no new competitions found')
 
-    return True
+    return added > 0
 
 
 def _exempt_categories(
@@ -254,13 +260,23 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
     config_changed = False
 
     for league_key, league_cfg in leagues.items():
-        if not league_cfg.get('active', False):
-            continue
         if only_league and league_key != only_league:
             continue
 
         display = league_cfg['display_name']
-        years_to_check = {today.year, today.year - 1}
+
+        # Determine year range: years after last fully-scraped year up to now
+        last_scraped = league_cfg.get('last_scraped_year')
+        first_year = (last_scraped + 1) if last_scraped else league_cfg.get('start_year', today.year)
+        years_to_check = range(first_year, today.year + 1)
+
+        # Schedule-refresh gate evaluated once at league level (not per year)
+        # so that refreshing year N never blocks year N-1 on the same run.
+        next_check_str = league_cfg.get('next_schedule_check')
+        do_schedule_refresh = (
+            next_check_str is None
+            or date.fromisoformat(next_check_str) <= today
+        )
 
         for year in sorted(years_to_check, reverse=True):
             pending = league_cfg.get('pending_competitions', [])
@@ -315,28 +331,53 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
                         f'  [{display} {year}] {len(overdue)} overdue pending '
                         f'competition(s) found, but no results published yet'
                     )
-                config_changed = True  # last_schedule_check update below
 
             # ── Case 2: no pending competitions for this year ────────────────
             else:
-                last_check_str = league_cfg.get('last_schedule_check')
-                if last_check_str:
-                    last_check = date.fromisoformat(last_check_str)
-                    days_since = (today - last_check).days
-                else:
-                    days_since = _SCHEDULE_CHECK_DAYS + 1  # force refresh
-
-                if days_since >= _SCHEDULE_CHECK_DAYS:
+                if do_schedule_refresh:
                     changed = _refresh_schedule(
-                        client, league_key, league_cfg, year, today
+                        client, league_key, league_cfg, year,
                     )
                     if changed:
                         config_changed = True
                 else:
                     print(
                         f'  [{display} {year}] Skipping schedule refresh — '
-                        f'checked {days_since}d ago'
+                        f'next check on {next_check_str}'
                     )
+
+        # ── Post-year-loop: advance last_scraped_year ────────────────────────
+        # Walk forward from last_scraped through completed past years; stop at
+        # the first year that still has pending entries.
+        candidate = last_scraped if last_scraped is not None else (league_cfg.get('start_year', today.year) - 1)
+        while candidate + 1 < today.year:
+            next_year = candidate + 1
+            year_still_pending = [
+                e for e in league_cfg.get('pending_competitions', [])
+                if e['date'].startswith(str(next_year))
+            ]
+            if year_still_pending:
+                break
+            candidate = next_year
+        if candidate != last_scraped:
+            league_cfg['last_scraped_year'] = candidate
+            config_changed = True
+            print(f'  [{display}] Advanced last_scraped_year to {candidate}')
+
+        # Prune pending entries for years now covered by last_scraped_year
+        new_last = league_cfg.get('last_scraped_year')
+        if new_last:
+            all_pending = league_cfg.get('pending_competitions', [])
+            pruned = [e for e in all_pending if int(e['date'][:4]) > new_last]
+            if len(pruned) < len(all_pending):
+                league_cfg['pending_competitions'] = pruned
+                config_changed = True
+
+        # ── Post-year-loop: update next_schedule_check ───────────────────────
+        if do_schedule_refresh:
+            next_days = random.randint(_SCHEDULE_CHECK_DAYS_MIN, _SCHEDULE_CHECK_DAYS_MAX)
+            league_cfg['next_schedule_check'] = (today + timedelta(days=next_days)).isoformat()
+            config_changed = True
 
     if config_changed:
         save_config(config)
@@ -350,6 +391,7 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
     global_categories = config.get('categories', {})
     leagues = config.get('leagues', {})
     total_uploaded = 0
+    config_changed = False
 
     for league_key, league_cfg in leagues.items():
         if only_league and league_key != only_league:
@@ -419,6 +461,11 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
             uploaded = db.upload_records(client, new_rows)
             total_uploaded += uploaded
 
+            # Track last successfully scraped year so a mid-run conflict leaves
+            # last_scraped_year pointing to the last clean year.
+            league_cfg['last_scraped_year'] = year
+            config_changed = True
+
             # Update seen with this year's newly confirmed types
             for row in new_rows:
                 seen.setdefault(row['category'], set()).add(row['attack_type'])
@@ -430,7 +477,25 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
             for (d, p), cnt in sorted(comps.items()):
                 print(f'  [{display} {year}] + {d} {p} ({cnt} rows)')
 
+        # Prune pending entries for years now covered by last_scraped_year
+        new_last = league_cfg.get('last_scraped_year')
+        if new_last:
+            all_pending = league_cfg.get('pending_competitions', [])
+            pruned = [e for e in all_pending if int(e['date'][:4]) > new_last]
+            if len(pruned) < len(all_pending):
+                league_cfg['pending_competitions'] = pruned
+                config_changed = True
+
+        # Set next_schedule_check on clean completion
+        if not conflict_found:
+            next_days = random.randint(_SCHEDULE_CHECK_DAYS_MIN, _SCHEDULE_CHECK_DAYS_MAX)
+            league_cfg['next_schedule_check'] = (today + timedelta(days=next_days)).isoformat()
+            config_changed = True
+
     print(f'\nBackfill complete. Total rows uploaded: {total_uploaded}')
+    if config_changed:
+        save_config(config)
+        print('config.json updated.')
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

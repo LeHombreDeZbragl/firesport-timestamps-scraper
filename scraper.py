@@ -304,6 +304,15 @@ def parse_rows(
             else:
                 only_final_time = False
 
+            # Skip rows where lp or pp is less than 12
+            if (lp and float(lp) < 12) or (pp and float(pp) < 12):
+                print(
+                    f"Warning: Skipping row for team '{team}' — "
+                    f"lp or pp is less than 12 (lp={lp}, pp={pp})",
+                    file=sys.stderr,
+                )
+                continue
+
             rows.append({
                 'attack_date': attack_date,
                 'league': league,
