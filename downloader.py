@@ -19,15 +19,18 @@ from pathlib import Path
 import requests
 
 _BASE_URL = 'https://{league}.firesport.eu/web_souteze.php?akce=sel&rok={year}'
+_BASE_URL_STANDALONE = 'https://{league}.cz/web_souteze.php?akce=sel&rok={year}'
 _TIMEOUT = 30  # seconds
 
 
-def download_html(league: str, year: int) -> str:
+def download_html(league: str, year: int, standalone_domain: bool = False) -> str:
     """Download the competition-list page for a league/year and return HTML.
 
     Args:
-        league: League URL slug (e.g. 'zl', 'excr', 'vcbl').
-        year:   Season year.
+        league:           League URL slug (e.g. 'zl', 'excr', 'vcbl').
+        year:             Season year.
+        standalone_domain: When True, uses {league}.cz instead of
+                          {league}.firesport.eu (for leagues with their own domain).
 
     Returns:
         Raw HTML as a string.
@@ -35,7 +38,8 @@ def download_html(league: str, year: int) -> str:
     Raises:
         requests.RequestException on network or HTTP errors.
     """
-    url = _BASE_URL.format(league=league.lower(), year=year)
+    template = _BASE_URL_STANDALONE if standalone_domain else _BASE_URL
+    url = template.format(league=league.lower(), year=year)
     response = requests.get(url, timeout=_TIMEOUT)
     response.raise_for_status()
     return response.text

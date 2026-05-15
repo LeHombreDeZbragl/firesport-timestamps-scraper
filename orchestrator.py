@@ -99,9 +99,10 @@ def _process_year(
     """
     display = league_cfg['display_name']
     full_league_name = league_cfg.get('full_league_name', '')
+    standalone_domain = league_cfg.get('standalone_domain', False)
 
     try:
-        html = downloader.download_html(league_key, year)
+        html = downloader.download_html(league_key, year, standalone_domain=standalone_domain)
     except Exception as exc:
         print(f'  [{display} {year}] Download failed: {exc}', file=sys.stderr)
         return 0
@@ -155,8 +156,9 @@ def _refresh_schedule(
     Returns True if the config was modified (new entries added).
     """
     display = league_cfg['display_name']
+    standalone_domain = league_cfg.get('standalone_domain', False)
     try:
-        html = downloader.download_html(league_key, year)
+        html = downloader.download_html(league_key, year, standalone_domain=standalone_domain)
     except Exception as exc:
         print(
             f'  [{display} {year}] Schedule refresh download failed: {exc}',
@@ -413,7 +415,7 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
 
             # Scrape the year without uploading yet so we can validate first
             try:
-                html = downloader.download_html(league_key, year)
+                html = downloader.download_html(league_key, year, standalone_domain=league_cfg.get('standalone_domain', False))
             except Exception as exc:
                 print(f'  [{display} {year}] Download failed: {exc}', file=sys.stderr)
                 continue
