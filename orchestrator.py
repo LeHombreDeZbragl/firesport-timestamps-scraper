@@ -233,22 +233,24 @@ def _check_attack_type_conflicts(
     all types already accepted (from the DB or earlier years in this run).
     Categories in exempt_categories (mode 'auto') are skipped — intentional
     type variation has already been confirmed for those.
+    'Ostatní' (others) is also skipped as conflicts with it are not meaningful.
     """
     year_types: dict[str, set[str]] = {}
     for row in new_rows:
         cat = row['category']
-        if cat in exempt_categories:
+        if cat in exempt_categories or cat == 'Ostatní':
             continue
         year_types.setdefault(cat, set()).add(row['attack_type'])
 
     conflicts = []
     for cat, types_this_year in year_types.items():
-        combined = types_this_year | seen.get(cat, set())
+        # Filter 'Ostatní' from prior data too — it's not a real attack type
+        prior_types = seen.get(cat, set()) - {'Ostatní'}
+        combined = types_this_year | prior_types
         if len(combined) > 1:
-            prior = seen.get(cat, set())
             conflicts.append(
                 f"  Category '{cat}': found {sorted(types_this_year)} in "
-                f"{year}, but prior data has {sorted(prior) if prior else 'none'}"
+                f"{year}, but prior data has {sorted(prior_types) if prior_types else 'none'}"
             )
     return conflicts
 
@@ -394,6 +396,7 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
     leagues = config.get('leagues', {})
     total_uploaded = 0
     config_changed = False
+    any_conflict_found = False
 
     for league_key, league_cfg in leagues.items():
         if only_league and league_key != only_league:
@@ -458,6 +461,7 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
                     f'  then re-run:  python orchestrator.py --backfill --league {league_key}'
                 )
                 conflict_found = True
+                any_conflict_found = True
                 break
 
             uploaded = db.upload_records(client, new_rows)
@@ -494,10 +498,11 @@ def _run_backfill(client, config: dict, only_league: str | None = None) -> None:
             league_cfg['next_schedule_check'] = (today + timedelta(days=next_days)).isoformat()
             config_changed = True
 
-    print(f'\nBackfill complete. Total rows uploaded: {total_uploaded}')
-    if config_changed:
-        save_config(config)
-        print('config.json updated.')
+    if not any_conflict_found:
+        print(f'\nBackfill complete. Total rows uploaded: {total_uploaded}')
+        if config_changed:
+            save_config(config)
+            print('config.json updated.')
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
