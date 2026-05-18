@@ -219,6 +219,14 @@ CREATE TABLE public.timestamps (
     pp                real,
     only_final_time   boolean DEFAULT false
 );
+
+-- Grant access for Data API (required after May 30, 2026 for new Supabase projects)
+grant select, insert, update, delete on public.timestamps to anon;
+grant select, insert, update, delete on public.timestamps to authenticated;
+grant select, insert, update, delete on public.timestamps to service_role;
+
+-- Enable Row Level Security
+alter table public.timestamps enable row level security;
 ```
 
 ### 4. Backfill historical data
