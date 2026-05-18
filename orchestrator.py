@@ -233,14 +233,16 @@ def _check_attack_type_conflicts(
     all types already accepted (from the DB or earlier years in this run).
     Categories in exempt_categories (mode 'auto') are skipped — intentional
     type variation has already been confirmed for those.
-    'Ostatní' (others) is also skipped as conflicts with it are not meaningful.
+    'Ostatní' (others) is also skipped as an attack_type — conflicts with it
+    are not meaningful.
     """
     year_types: dict[str, set[str]] = {}
     for row in new_rows:
         cat = row['category']
-        if cat in exempt_categories or cat == 'Ostatní':
+        attack_type = row['attack_type']
+        if cat in exempt_categories or attack_type == 'Ostatní':
             continue
-        year_types.setdefault(cat, set()).add(row['attack_type'])
+        year_types.setdefault(cat, set()).add(attack_type)
 
     conflicts = []
     for cat, types_this_year in year_types.items():
