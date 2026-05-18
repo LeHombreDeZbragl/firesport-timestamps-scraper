@@ -531,7 +531,7 @@ def main() -> None:
     )
 
     fieldnames = [
-        'attack_date', 'league', 'place', 'placement',
+        'attack_date', 'league', 'full_league_name', 'place', 'placement',
         'attack_type', 'category', 'team', 'lp', 'pp',
         'only_final_time',
     ]
