@@ -10,15 +10,21 @@
     "Ženy": "2B",
     "Junioři": "testing",
     "Juniorky": "2B",
-    "Muži>35": "testing",
-    "Smíšený dorost": "2B",
-    "Dorostenci": "2B",
+    "Muži>35": "2B",
+    "Ženy>30": "2B",
+    "Smíšený dorost": "testing",
+    "Dorostenci": "testing",
     "Finále": "Ostatní",
     "Profi": "Ostatní",
     "PS-12": "Ostatní",
     "Děti-mladší": "Ostatní",
     "Děti-starší": "Ostatní",
-    "Přípravka": "Ostatní"
+    "Přípravka": "Ostatní",
+    "Dorostenky": "Ostatní",
+    "Volné": "Ostatní",
+    "Dospělí": "Ostatní",
+    "Smíšené": "Ostatní",
+    "Mladí-hasiči": "Ostatní"
   },
   "leagues": {
     "bhl": {
@@ -29,16 +35,16 @@
       "categories": {
         "Muži": "3B"
       },
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2025
     },
     "bl": {
       "display_name": "BL",
       "full_league_name": "Brdská liga",
       "start_year": 2013,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2024
     },
     "bnl": {
       "display_name": "BNL",
@@ -48,40 +54,50 @@
       "categories": {
         "Muži": "auto"
       },
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-30",
+      "last_scraped_year": 2025
     },
     "bp": {
       "display_name": "BP",
       "full_league_name": "Boleslavský pohár",
       "start_year": 2016,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2025
     },
     "chl": {
       "display_name": "CHL",
       "full_league_name": "Chodská liga",
       "start_year": 2016,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Dorostenci": "Ostatní",
+        "Dorostenky": "Ostatní",
+        "Junioři": "Ostatní",
+        "Juniorky": "Ostatní",
+        "Smíšený dorost": "Ostatní"
+      },
+      "next_schedule_check": "2026-05-27",
+      "last_scraped_year": 2025
     },
     "chnhl": {
       "display_name": "CHNHL",
       "full_league_name": "Chodská noční hasičská liga",
       "start_year": 2017,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-31",
+      "last_scraped_year": 2025
     },
     "excr": {
       "display_name": "EXČR",
       "full_league_name": "Extraliga ČR",
       "start_year": 1996,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-25",
+      "last_scraped_year": 2025
     },
     "fnc": {
       "display_name": "FNC",
@@ -89,219 +105,251 @@
       "start_year": 2013,
       "pending_competitions": [],
       "categories": {
-        "Muži": "2B",
-        "Ženy": "2B"
+        "Muži": "2B"
       },
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-27",
+      "last_scraped_year": 2023
     },
     "gpho": {
       "display_name": "GPHO",
       "full_league_name": "4FIRE Grand Prix Hodonín",
       "start_year": 1997,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2026
     },
     "hbhl": {
       "display_name": "HBHL",
       "full_league_name": "Havlíčkobrodská liga",
       "start_year": 1999,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-25",
+      "last_scraped_year": 2025
     },
     "hbmh": {
       "display_name": "HBMH",
       "full_league_name": "Havlíčobrodské turné mladých hasičů",
       "start_year": 2022,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-26",
+      "last_scraped_year": 2025
     },
     "he": {
       "display_name": "HE",
       "full_league_name": "Hanácká extraliga",
       "start_year": 2008,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2026
     },
     "hpl": {
       "display_name": "HPL",
       "full_league_name": "Hasičská pardubická liga",
       "start_year": 2021,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-25",
+      "last_scraped_year": 2026
     },
     "jchl": {
       "display_name": "JCHL",
       "full_league_name": "Jihočeská hasičská liga",
       "start_year": 2000,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "3B"
+      },
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2025
     },
     "jhhl": {
       "display_name": "JHHL",
       "full_league_name": "Jindřichohradecká hasičská liga",
       "start_year": 2014,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2023
     },
     "jl": {
       "display_name": "JL",
       "full_league_name": "Jizerská liga",
       "start_year": 2007,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "3B"
+      },
+      "next_schedule_check": "2026-05-25",
+      "last_scraped_year": 2026
     },
     "jlns": {
       "display_name": "JLNS",
       "full_league_name": "Jihovalašská liga nočních soutěží",
       "start_year": 2013,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-23",
+      "last_scraped_year": 2025
     },
     "jol": {
       "display_name": "JOL",
       "full_league_name": "Jihlavská open liga v PÚ",
       "start_year": 2008,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2019
     },
     "kl": {
       "display_name": "KL",
       "full_league_name": "Krušnohorská liga",
       "start_year": 1997,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-28",
+      "last_scraped_year": 2025
     },
     "lpo": {
       "display_name": "LPO",
       "full_league_name": "Liga Pardubického okresu",
       "start_year": 2015,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-25",
+      "last_scraped_year": 2019
     },
     "mhjpr": {
       "display_name": "MHJPR",
       "full_league_name": "Velká cena MHJ Přerov",
       "start_year": 2013,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2019
     },
     "mpmhj": {
       "display_name": "MPMHJ",
       "full_league_name": "Moravský pohár - liga MHJ a PRL v požárním útoku",
       "start_year": 2020,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-24",
+      "last_scraped_year": 2026
     },
     "msp": {
       "display_name": "MSP",
       "full_league_name": "Moravskoslezský pohár",
       "start_year": 2003,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-25",
+      "last_scraped_year": 2023
     },
     "olsy": {
       "display_name": "OLSY",
       "full_league_name": "Okresní liga Svitavska",
       "start_year": 2019,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-28",
+      "last_scraped_year": 2023
     },
     "onl": {
       "display_name": "ONL",
       "full_league_name": "Olomoucká noční liga",
       "start_year": 2017,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-28",
+      "last_scraped_year": 2025
     },
     "oph": {
       "display_name": "OPH",
       "full_league_name": "O pohár Hořiny",
       "start_year": 2007,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-26",
+      "last_scraped_year": 2025
     },
     "oshklatovy": {
       "display_name": "OSHK",
       "full_league_name": "Plamen okres Klatovy",
       "start_year": 2000,
+      "standalone_domain": true,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-26",
+      "last_scraped_year": 2025
     },
     "pbhl": {
       "display_name": "PBHL",
       "full_league_name": "Podboubínská hasičská liga",
       "start_year": 2013,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-28",
+      "last_scraped_year": 2025
     },
     "pehl": {
       "display_name": "PEHL",
       "full_league_name": "Pelhřimovská hasičská liga",
       "start_year": 2009,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-28",
+      "last_scraped_year": 2022
     },
     "phl": {
       "display_name": "PHL",
       "full_league_name": "Podhostýnská hasičská liga",
       "start_year": 2003,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-30",
+      "last_scraped_year": 2025
     },
     "pkl": {
       "display_name": "PKL",
       "full_league_name": "Podkozákovská hasičská liga",
       "start_year": 2013,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-27",
+      "last_scraped_year": 2026
     },
     "pl": {
       "display_name": "PL",
       "full_league_name": "Podlipanská liga",
       "start_year": 2001,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto",
+        "Smíšený dorost": "auto"
+      },
+      "next_schedule_check": "2026-05-28",
+      "last_scraped_year": 2022
     },
     "plhl": {
       "display_name": "PLHL",
       "full_league_name": "Polabská hasičská liga",
       "start_year": 2000,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
-    },
-    "pohl": {
-      "display_name": "POHL",
-      "full_league_name": "Podorlická hasičská liga",
-      "start_year": 2023,
-      "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-27",
+      "last_scraped_year": 2022
     },
     "plpu": {
       "display_name": "PLPU",
@@ -309,147 +357,198 @@
       "start_year": 2013,
       "pending_competitions": [],
       "categories": {
-        "Muži": "auto",
-        "Ženy": "2B"
+        "Muži": "auto"
       },
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-31",
+      "last_scraped_year": 2025
+    },
+    "pohl": {
+      "display_name": "POHL",
+      "full_league_name": "Podorlická hasičská liga",
+      "start_year": 2023,
+      "pending_competitions": [],
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-05-27",
+      "last_scraped_year": 2025
     },
     "sh": {
       "display_name": "SH",
       "full_league_name": "Šumavský hasič",
       "start_year": 2012,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-06-03",
+      "last_scraped_year": 2019
     },
     "shl": {
       "display_name": "SHL",
       "full_league_name": "Šumavská hasičská liga",
       "start_year": 2006,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-05-31",
+      "last_scraped_year": 2025
     },
     "tcl": {
       "display_name": "TCL",
       "full_league_name": "Tachovské Ligy",
       "start_year": 2018,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-07",
+      "last_scraped_year": 2025
     },
     "thl": {
       "display_name": "THL",
       "full_league_name": "Táborská hasičská liga",
       "start_year": 2009,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-07",
+      "last_scraped_year": 2025
     },
     "trl": {
       "display_name": "TRL",
       "full_league_name": "Třebíčská liga",
       "start_year": 1996,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-06-10",
+      "last_scraped_year": 2026
     },
     "vcbl": {
       "display_name": "VCB",
       "full_league_name": "Velká cena Blanenska v PÚ",
       "start_year": 2002,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-06-10",
+      "last_scraped_year": 2026
     },
     "vchl": {
       "display_name": "VCHL",
       "full_league_name": "Východočeská hasičská liga",
       "start_year": 2013,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-09",
+      "last_scraped_year": 2026
     },
     "vcos": {
       "display_name": "VCOS",
       "full_league_name": "Velká cena okresu Šumperk",
       "start_year": 2014,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-10",
+      "last_scraped_year": 2025
     },
     "vcov": {
       "display_name": "VCOV",
       "full_league_name": "Velká cena okresu Vyškov",
       "start_year": 2012,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-09",
+      "last_scraped_year": 2025
     },
     "vcpr": {
       "display_name": "VCPR",
       "full_league_name": "Velká cena OSH Přerov",
       "start_year": 2003,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto",
+        "Dorostenci": "auto"
+      },
+      "next_schedule_check": "2026-06-08",
+      "last_scraped_year": 2025
     },
     "vcpv": {
       "display_name": "VCPV",
       "full_league_name": "Velká cena Prostějovska",
       "start_year": 2010,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-09",
+      "last_scraped_year": 2025
     },
     "vct": {
       "display_name": "VCT",
       "full_league_name": "Velká cena Třeboňska",
       "start_year": 2011,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-10",
+      "last_scraped_year": 2025
     },
     "vcu": {
       "display_name": "VCU",
       "full_league_name": "Velká cena Ústeckoorlicka",
       "start_year": 2008,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-10",
+      "last_scraped_year": 2022
     },
     "vcuh": {
       "display_name": "VCUH",
       "full_league_name": "Velká cena OSH ČMS Uh.Hradiště",
       "start_year": 1990,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-10",
+      "last_scraped_year": 2025
     },
     "vhl": {
       "display_name": "VHL",
       "full_league_name": "Valašská hasičská liga",
       "start_year": 2012,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-07",
+      "last_scraped_year": 2025
     },
     "zchl": {
       "display_name": "ZCHL",
       "full_league_name": "Západočeská hasičská liga",
       "start_year": 2004,
+      "standalone_domain": true,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-07",
+      "last_scraped_year": 2025
     },
     "zlps": {
       "display_name": "ZLPS",
       "full_league_name": "Zlínská liga požárního sportu",
       "start_year": 2004,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "categories": {
+        "Muži": "auto"
+      },
+      "next_schedule_check": "2026-06-08",
+      "last_scraped_year": 2025
     },
     "zl": {
       "display_name": "ŽL",
@@ -458,10 +557,11 @@
       "pending_competitions": [],
       "categories": {
         "Muži": "3B",
-        "Ženy": "2B"
+        "Ženy": "2B",
+        "Junioři": "3B"
       },
-      "next_schedule_check": "2026-05-13",
-      "last_scraped_year": null
+      "next_schedule_check": "2026-06-10",
+      "last_scraped_year": 2025
     }
   }
 }
