@@ -916,29 +916,8 @@
       "display_name": "PEHL",
       "full_league_name": "Pelhřimovská hasičská liga",
       "start_year": 2009,
-      "pending_competitions": [
-        {
-          "date": "2026-06-06",
-          "place": "Buřenice"
-        },
-        {
-          "date": "2026-06-20",
-          "place": "Červená Řečice"
-        },
-        {
-          "date": "2026-07-25",
-          "place": "Samšín"
-        },
-        {
-          "date": "2026-07-31",
-          "place": "Pacov"
-        },
-        {
-          "date": "2026-08-15",
-          "place": "Samšín - Přáslavice"
-        }
-      ],
-      "next_schedule_check": "2026-06-06",
+      "pending_competitions": [],
+      "next_schedule_check": "2026-05-28",
       "last_scraped_year": 2025
     },
     "phl": {
@@ -1006,7 +985,7 @@
         "Muži": "auto",
         "Smíšený dorost": "auto"
       },
-      "next_schedule_check": "2026-06-07",
+      "next_schedule_check": "2026-05-28",
       "last_scraped_year": 2025
     },
     "plhl": {
@@ -1142,7 +1121,7 @@
       "full_league_name": "Šumavský hasič",
       "start_year": 2012,
       "pending_competitions": [],
-      "next_schedule_check": "2026-06-08",
+      "next_schedule_check": "2026-06-03",
       "last_scraped_year": 2025
     },
     "shl": {
