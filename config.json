@@ -271,7 +271,12 @@
       "display_name": "CHL",
       "full_league_name": "Chodská liga",
       "start_year": 2016,
-      "pending_competitions": [],
+      "pending_competitions": [
+        {
+          "date": "2026-05-30",
+          "place": "Hluboká"
+        }
+      ],
       "categories": {
         "Dorostenci": "Ostatní",
         "Dorostenky": "Ostatní",
@@ -279,7 +284,7 @@
         "Juniorky": "Ostatní",
         "Smíšený dorost": "Ostatní"
       },
-      "next_schedule_check": "2026-05-27",
+      "next_schedule_check": "2026-06-08",
       "last_scraped_year": 2025
     },
     "chnhl": {
@@ -363,7 +368,7 @@
       "categories": {
         "Muži": "2B"
       },
-      "next_schedule_check": "2026-05-27",
+      "next_schedule_check": "2026-06-10",
       "last_scraped_year": 2025
     },
     "gpho": {
@@ -830,7 +835,7 @@
       "full_league_name": "Podkozákovská hasičská liga",
       "start_year": 2013,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-27",
+      "next_schedule_check": "2026-06-11",
       "last_scraped_year": 2026
     },
     "pl": {
@@ -850,7 +855,7 @@
       "full_league_name": "Polabská hasičská liga",
       "start_year": 2000,
       "pending_competitions": [],
-      "next_schedule_check": "2026-05-27",
+      "next_schedule_check": "2026-06-12",
       "last_scraped_year": 2025
     },
     "plpu": {
@@ -868,11 +873,52 @@
       "display_name": "POHL",
       "full_league_name": "Podorlická hasičská liga",
       "start_year": 2023,
-      "pending_competitions": [],
+      "pending_competitions": [
+        {
+          "date": "2026-06-06",
+          "place": "Havlovice"
+        },
+        {
+          "date": "2026-06-20",
+          "place": "Semechnice"
+        },
+        {
+          "date": "2026-06-21",
+          "place": "Vrbice"
+        },
+        {
+          "date": "2026-07-04",
+          "place": "Častolovice"
+        },
+        {
+          "date": "2026-07-11",
+          "place": "Sněžné"
+        },
+        {
+          "date": "2026-08-01",
+          "place": "Kvasiny"
+        },
+        {
+          "date": "2026-08-02",
+          "place": "Lukavice"
+        },
+        {
+          "date": "2026-08-29",
+          "place": "Nový Hrádek"
+        },
+        {
+          "date": "2026-08-30",
+          "place": "Ohnišov"
+        },
+        {
+          "date": "2026-09-12",
+          "place": "Bukovice"
+        }
+      ],
       "categories": {
         "Muži": "auto"
       },
-      "next_schedule_check": "2026-05-27",
+      "next_schedule_check": "2026-06-10",
       "last_scraped_year": 2025
     },
     "sh": {
