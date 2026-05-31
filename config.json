@@ -415,10 +415,6 @@
       "start_year": 1999,
       "pending_competitions": [
         {
-          "date": "2026-05-30",
-          "place": "Habry"
-        },
-        {
           "date": "2026-06-06",
           "place": "Seč"
         },
@@ -942,10 +938,6 @@
       "full_league_name": "Podhostýnská hasičská liga",
       "start_year": 2003,
       "pending_competitions": [
-        {
-          "date": "2026-05-30",
-          "place": "Ludslavice"
-        },
         {
           "date": "2026-06-28",
           "place": "Pravčice"
