@@ -303,10 +303,6 @@
       "start_year": 2017,
       "pending_competitions": [
         {
-          "date": "2026-05-30",
-          "place": "Hluboká u Kdyně - U Koupaliště"
-        },
-        {
           "date": "2026-06-20",
           "place": "Bezdružice - Hasičské hřiště"
         },
@@ -651,14 +647,6 @@
       "start_year": 1997,
       "pending_competitions": [
         {
-          "date": "2026-05-30",
-          "place": "Lhenice"
-        },
-        {
-          "date": "2026-05-31",
-          "place": "Peruc"
-        },
-        {
           "date": "2026-06-13",
           "place": "Großolbersdorf , dvojkolo"
         },
@@ -788,14 +776,6 @@
       "full_league_name": "O pohár Hořiny",
       "start_year": 2007,
       "pending_competitions": [
-        {
-          "date": "2026-05-23",
-          "place": "Tlumačov"
-        },
-        {
-          "date": "2026-05-30",
-          "place": "Březí"
-        },
         {
           "date": "2026-06-13",
           "place": "Honezovice"
