@@ -1,31 +1,29 @@
 # firesport-timestamps-scraper
 
-Scrapes competition results from [firesport.eu](https://firesport.eu) for Czech firesport leagues and stores them in a Supabase database. A GitHub Actions workflow runs the pipeline daily and commits any schedule changes back to the repo automatically.
+Scrapes competition results from [firesport.eu](https://firesport.eu) for Czech firesport leagues and stores them in a Supabase database. A GitHub Actions workflow runs the pipeline daily and commits any changes back to the repo automatically.
 
 ---
 
 ## What it does
 
-Each league has a season page at:
+The scraper uses a two-step pipeline:
 
-```
-https://{league}.firesport.eu/web_souteze.php?akce=sel&rok={year}
-```
+1. **Download global competition list** from `https://www.firesport.eu/vysledky-souteze-{year}` — a summary table for the entire year listing all competitions, their dates, places, districts, and affiliated leagues.
 
-The page lists all competitions of the season. Each competition is a tab with an HTML table of results — one row per competitor, with columns for placement, team, lp (first individual attempt), pp (second individual attempt), and final time.
+2. **For each competition, download and parse the individual result page** from `https://www.firesport.eu/vysledek-*.html` — extract results table(s) organized by category and upload to Supabase.
 
-The scraper collects all results and uploads them to a `public.timestamps` table in Supabase. On every daily run it only downloads pages whose competition dates are due or overdue (smart scheduling via `pending_competitions` in `config.json`), keeping network traffic low.
+Results are stored in a `public.timestamps` table. Link-based deduplication (`link` column) prevents re-scraping the same competition page, so the pipeline is safe to run multiple times.
 
 ---
 
 ## Supported leagues
 
-| Key    | Display name | Since |
-|--------|--------------|-------|
-| `zl`   | ŽL           | 2012  |
-| `excr` | EXČR         | 1996  |
-| `vcbl` | VCB          | 2002  |
-| `plpu` | PLPU         | 2013  |
+~50 Czech firesport leagues are supported. A complete list is defined in `config.json` under the `"leagues"` key. Each league has:
+
+- A **display name** (e.g., `ŽL` for Žďárská liga)
+- A **full human-readable name** (e.g., Žďárská liga)
+- A **start year** for backfill operations
+- Optional **per-league category overrides** (to handle league-specific attack type variations)
 
 ---
 
@@ -33,10 +31,10 @@ The scraper collects all results and uploads them to a `public.timestamps` table
 
 ```
 orchestrator.py          # main pipeline — daily and backfill modes
-downloader.py            # HTTP fetcher; also a standalone debug CLI
-scraper.py               # HTML parser; also a standalone debug CLI
+downloader.py            # HTTP fetcher for global lists and individual pages
+scraper.py               # HTML parser for lists and individual pages
 db.py                    # Supabase client wrapper
-config.json              # leagues, categories, and pending schedule (committed)
+config.json              # leagues, categories, district abbreviations (committed)
 requirements.txt         # Python dependencies
 .env                     # credentials — NOT committed (see .env.example)
 .env.example             # template for .env
@@ -51,115 +49,141 @@ debug_output/            # local HTML cache used by --debug (gitignored)
 
 ### `downloader.py`
 
-Downloads HTML from firesport.eu.
+Downloads HTML pages from firesport.eu.
 
-**Used by the orchestrator** via:
+**Used by orchestrator**:
 
 ```python
-html: str = downloader.download_html(league_key, year)
+# Download global list
+html = downloader.download_global_list(year=2025)
+
+# Download individual competition page
+html = downloader.download_competition_page(link='vysledek-marsovice-14838.html')
+
+# (Deprecated) Download per-league-year page (legacy, no longer used by orchestrator)
+html = downloader.download_html(league_key='zl', year=2025)
 ```
 
-Returns the raw HTML string in memory — nothing written to disk.
-
-**Standalone CLI** for manual inspection:
+**Standalone CLI** for debugging:
 
 ```bash
-# Save to debug_output/zl/ZL.2025.html
-python downloader.py --debug zl 2025 2025
+# Download global list to debug_output/global_lists/
+python downloader.py --global-list 2025 --debug
 
-# Save a range of years
-python downloader.py --debug vcbl 2010 2015
+# Download individual competition to debug_output/competitions/
+python downloader.py --competition vysledek-marsovice-14838.html --debug
+
+# (Legacy) Download per-league-year page to debug_output/zl/
+python downloader.py --debug zl 2025 2025
 ```
 
 ---
 
 ### `scraper.py`
 
-Parses raw HTML into a list of result dicts.
+Parses raw HTML into structured result dicts.
 
-**Used by the orchestrator** via two functions:
+**Used by orchestrator**:
 
 ```python
-# Parse all result rows from a downloaded page
-rows: list[dict] = scraper.scrape_html(
-    html, source_name, league_display,
-    global_categories, league_categories, interactive=False
+# Parse global competition list
+competitions = scraper.parse_global_list(html)
+# → [{"date": "2025-01-11", "place": "Dolní Hradiště", "link": "vysledek-...", 
+#      "district": "Plzeň-sever", "league": "FSEU"}, ...]
+
+# Parse individual competition page
+rows = scraper.scrape_individual_page(
+    html, meta, global_categories, league_categories, district_map,
+    source_name='vysledek-marsovice-14838.html'
 )
+# → [{"attack_date": "2025-05-10", "place": "Maršovice /Žďár nad Sázavou", 
+#     "team": "Trnava/TR", "lp": "16.45", "pp": "16.45", "link": "vysledek-...", ...}, ...]
 
-# Parse only the schedule (competition tabs) — no result tables needed
-schedule: list[dict] = scraper.scrape_schedule(html)
-# → [{"date": "2026-05-30", "place": "Zbraslav", "has_results": False}, ...]
-```
-
-**Standalone CLI** for debugging against a locally saved HTML file:
-
-```bash
-python scraper.py zl debug_output/zl -o out.csv
+# (Legacy) Parse per-league-year page results
+rows = scraper.scrape_html(html, ...)
 ```
 
 #### Attack type resolution
 
 Each result row needs an `attack_type` value (`2B` or `3B`). The scraper resolves this in three tiers:
 
-1. **Per-league override** in `config.json` — can be a fixed value (`"2B"` / `"3B"`) or `"auto"`, which parses the `NxB` pattern from the competition's h3 heading. Useful for leagues where attack type varies by competition (e.g. PLPU Muži).
-2. **Global default** from the top-level `categories` map in `config.json`. All entries default to `"auto"` — the NxB pattern is parsed from the heading. Set a fixed value here to pin a category globally (e.g. if a league always runs `"Ženy"` as `2B` and the heading never contains `NxB`).
-3. **Interactive prompt** (when running with `interactive=True`, i.e. the debug CLI) or a warning + row skip (automated mode) when no type could be determined.
+1. **Per-league override** in `config.json` — can be a fixed value (`"2B"` / `"3B"`) or `"auto"`, which parses the `NxB` pattern from the competition's h3 heading.
+2. **Global default** from the top-level `categories` map in `config.json`. All entries default to `"auto"`.
+3. **Interactive prompt** (debug CLI) or a warning + row skip (automated mode).
 
 #### `only_final_time` flag
 
-Some older results list only the final time without individual lp/pp splits. When this is detected, `lp` and `pp` are set to the final time and `only_final_time` is set to `true` so downstream consumers can distinguish them.
+Some results list only the final time without individual lp/pp splits. When detected, `lp` and `pp` are set to the final time and `only_final_time` is set to `true`.
+
+#### District mapping
+
+The global list provides full Czech district names (e.g., "Žďár nad Sázavou"). The `scraper.extract_team()` function maps these to short SPZ codes (e.g., "ZR") using the `district_abbreviations` map in `config.json`. Team records in the DB are formatted as `"TeamName/SPZ"` (e.g., `"Trnava/TR"`).
 
 ---
 
 ### `db.py`
 
-Thin wrapper around the Supabase Python client.
+Wrapper around the Supabase Python client.
 
 | Function | What it does |
 |---|---|
 | `init_client()` | Loads `.env`, validates credentials, returns a `Client` |
-| `get_existing_competitions(client, league, year)` | Returns `{(date, place), ...}` already in the DB — used for dedup |
-| `upload_records(client, records)` | Batch-inserts rows (500 at a time); converts `lp`/`pp` empty strings to `None` because the DB columns are `real` |
+| `get_existing_competitions(client, league, year)` | Returns `{(date, place, category), ...}` already in the DB for row-level dedup |
+| `get_scraped_links(client, year)` | Returns `{link, ...}` already in the DB for competition-level dedup |
+| `get_category_attack_types(client, league)` | Returns `{category: {attack_type, ...}, ...}` for conflict detection in backfill |
+| `upload_records(client, records)` | Batch-inserts rows (500 at a time); converts empty lp/pp to `None` |
 
 ---
 
 ### `orchestrator.py`
 
-The top-level coordinator. Calls downloader → scraper → db in sequence.
+Top-level coordinator. Calls downloader → scraper → db in sequence.
 
 #### Daily mode (default)
 
-For every league in `config.json`, checks all years from `last_scraped_year + 1` up to the current year (falls back to `start_year` when `last_scraped_year` is null). Per year:
+```bash
+python orchestrator.py
+python orchestrator.py --league zl
+```
 
-- **Has overdue pending competitions** (date ≤ today, not yet in DB)? → Download and scrape the year page. Upload any new rows found. Remove resolved competitions from `pending_competitions`. If results are not published yet, leave the entry in pending and retry on the next run.
-- **All pending competitions are in the future?** → Skip that year.
-- **No pending competitions at all?** → Refresh the schedule from the website if `next_schedule_check` is today or in the past. New competitions found are added to `pending_competitions`.
+For the current year only:
 
-The schedule-refresh gate is checked **once per league** (not per year), so both the current and previous year are refreshed on the same run when due. After a refresh, `next_schedule_check` is set to `today + randint(12, 16)` days, spreading checks across different days over time.
+1. Download the global competition list
+2. Query the DB for already-scraped competitions (via `link` column)
+3. Filter to competitions not yet scraped and with date ≤ today (future competition results are not published yet)
+4. For each new competition:
+   - Download the individual page
+   - Parse results using `scrape_individual_page()`
+   - Upload any rows not already in the DB (row-level dedup via `(attack_date, place, category)` tuple)
 
-After the year loop, `last_scraped_year` is advanced for every sequential past year whose pending list is fully empty, and stale pending entries are pruned automatically.
-
-After each run, `config.json` is saved if anything changed. The GitHub Actions workflow commits this file back to the repo.
+If `--league KEY` is specified, only competitions for that league are processed (FSEU unlabeled competitions are excluded in per-league runs).
 
 #### Backfill mode
 
 ```bash
-python orchestrator.py --backfill            # all leagues, all years
-python orchestrator.py --backfill --league zl  # one league
+python orchestrator.py --backfill               # all leagues, all years
+python orchestrator.py --backfill --league zl   # one league
+python orchestrator.py --backfill --year 2024   # one year
+python orchestrator.py --backfill --league zl --year 2024
 ```
 
-Backfill reads the league definitions from `config.json` and processes the specified league(s) from that file.
-Downloads every year from `start_year` to the current year, diffs against the DB, and uploads only new rows. Safe to re-run — it never creates duplicates.
+Processes the specified year range and league(s), uploading any rows not already in the DB.
 
-After each successfully uploaded year, `last_scraped_year` is updated in `config.json` immediately so that a mid-run conflict leaves it pointing to the last clean year. After a clean run, `next_schedule_check` is also set.
+**Year range**:
+- `--year YEAR` specified: only that year
+- Otherwise: from `min(league start_years)` to current year
 
-**Conflict detection** runs before each upload. The scraper tracks which `attack_type` values it has seen for every category — both from the DB (existing data) and from all years already processed in the current run. If a category ever resolves to two different attack types (e.g. `Muži` is `3B` in 2022 but `2B` in 2023, or both within the same year), the backfill:
+**League filtering**:
+- `--league KEY` specified: only that league (FSEU excluded)
+- Otherwise: all leagues including FSEU
 
-1. Prints a detailed conflict report naming the category, the conflicting types, and the year where the new conflict was detected vs the prior data
-2. Deletes **all existing rows for that league** from the DB so the state is clean
-3. Stops the league's backfill entirely
+**Conflict detection**: Before uploading, the backfill checks if any category resolves to two different attack types within or across years (e.g., `Muži` is `3B` in 2022 but `2B` in 2023). On conflict:
 
-To resolve: inspect the HTML for the flagged year, decide whether the difference is intentional (add a per-league `categories` override in `config.json`) or a data error, then re-run the backfill for that league.
+1. Prints a detailed conflict report
+2. Deletes **all existing rows for that league** from the DB
+3. Marks the league as failed and continues with other leagues
+
+To resolve: inspect the flagged HTML, decide whether the difference is intentional (add a per-league `categories` override), then re-run.
 
 ---
 
@@ -170,18 +194,21 @@ Table: `public.timestamps`
 | Column           | Type      | Notes |
 |------------------|-----------|-------|
 | `attack_date`    | `text`    | YYYY-MM-DD |
-| `league`         | `text`    | Display name (ŽL, EXČR, …) |
-| `full_league_name` | `text`  | Full name (Žďárská liga, Extraliga ČR, …) |
-| `place`          | `text`    | Competition venue |
+| `league`         | `text`    | Display name (ŽL, EXČR, …) or NULL for FSEU |
+| `full_league_name` | `text`  | Full name (Žďárská liga, …) or NULL for FSEU |
+| `place`          | `text`    | "PlaceName /DistrictName" (e.g., "Maršovice /Žďár nad Sázavou") |
 | `placement`      | `text`    | Final ranking position |
 | `attack_type`    | `text`    | `2B` or `3B` |
 | `category`       | `text`    | e.g. Muži, Ženy, Junioři |
-| `team`           | `text`    | Team name |
+| `team`           | `text`    | "TeamName/SPZ" (e.g., "Trnava/TR") — SPZ code from district_abbreviations |
 | `lp`             | `real`    | Nullable — first individual attempt (seconds) |
 | `pp`             | `real`    | Nullable — second individual attempt (seconds) |
-| `only_final_time`| `boolean` | `true` when lp/pp are duplicated final time, individual splits unavailable |
+| `only_final_time`| `boolean` | `true` when lp/pp are duplicated final time |
+| `link`           | `text`    | Nullable — relative URL of competition page (e.g., "vysledek-marsovice-14838.html") |
 
-Deduplication key used by the scraper: `(league, attack_date, place)`.
+**Deduplication keys**:
+- Row-level: `(attack_date, place, category)` — prevents duplicate rows within a competition
+- Competition-level: `link` for a given year — prevents re-scraping the same page
 
 ---
 
@@ -217,10 +244,11 @@ CREATE TABLE public.timestamps (
     team              text,
     lp                real,
     pp                real,
-    only_final_time   boolean DEFAULT false
+    only_final_time   boolean DEFAULT false,
+    link              text
 );
 
--- Grant access for Data API (required after May 30, 2026 for new Supabase projects)
+-- Grant access for Data API
 grant select, insert, update, delete on public.timestamps to anon;
 grant select, insert, update, delete on public.timestamps to authenticated;
 grant select, insert, update, delete on public.timestamps to service_role;
@@ -229,13 +257,25 @@ grant select, insert, update, delete on public.timestamps to service_role;
 alter table public.timestamps enable row level security;
 ```
 
-### 4. Backfill historical data
+### 4. (Migration) Clear old data
+
+If migrating from the old per-league-year scraper, **clear the `timestamps` table first**:
+
+```sql
+DELETE FROM public.timestamps;
+```
+
+The new scraper uses a different `place` format (now includes district), so mixing old and new row formats will cause deduplication issues.
+
+### 5. Backfill historical data
 
 ```bash
 python orchestrator.py --backfill
 ```
 
-### 5. Daily automation
+This will take a while on the first run (processing all years back to each league's `start_year`). Progress is printed per competition.
+
+### 6. Daily automation
 
 Push to GitHub. Add two repository secrets in **Settings → Secrets and variables → Actions**:
 
@@ -244,9 +284,7 @@ Push to GitHub. Add two repository secrets in **Settings → Secrets and variabl
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_KEY` | Your Supabase service role key |
 
-The workflow (`.github/workflows/scrape.yml`) runs at **06:00 UTC every day**. It can also be triggered manually from the Actions tab with a choice of `daily` (default) or `backfill` mode and an optional league filter.
-
-After each run the workflow auto-commits `config.json` back to `main` if the pending schedule changed. Commits are tagged `[skip ci]` to prevent re-triggering.
+The workflow (`.github/workflows/scrape.yml`) runs at **06:00 UTC every day**. It can also be triggered manually from the Actions tab.
 
 ---
 
@@ -260,47 +298,71 @@ After each run the workflow auto-commits `config.json` back to `main` if the pen
     "Ženy": "2B"
     // ...
   },
+
+  // District name → SPZ code mapping (e.g., "Žďár nad Sázavou" → "ZR")
+  // Used by scraper.extract_team() to convert full district names to short codes
+  "district_abbreviations": {
+    "Benešov": "BE",
+    "Blansko": "BK",
+    // ... 59 total districts
+  },
+
+  // Category display aliases (e.g., some competitions label the category differently)
+  "category_aliases": {
+    // "Raw category text from HTML": "Standardized name"
+  },
+
+  // First words that form compound category names (e.g., "Smíšený dorost")
+  "compound_category_prefixes": ["Smíšený", ...],
+
   "leagues": {
     "zl": {
-      "display_name": "ŽL",        // used as the league value in the DB
+      "display_name": "ŽL",                // used as the league value in the DB
       "full_league_name": "Žďárská liga",  // written to full_league_name column
-      "start_year": 2012,           // earliest year to scrape in backfill
-      // Highest year that is fully scraped. Daily mode checks years after this.
-      // Null = fall back to start_year (triggers a mini-backfill on next daily run).
-      "last_scraped_year": 2025,
-      // Competitions known to be scheduled but not yet in the DB.
-      // Entries are added during schedule refreshes and removed once
-      // results are successfully uploaded.
-      "pending_competitions": [
-        { "date": "2026-05-30", "place": "Zbraslav" }
-      ],
-      // Absolute date of the next schedule refresh. Null forces a refresh on
-      // next run. Set to today + randint(12, 16) days after each refresh so
-      // checks are spread out rather than clustering on the same day.
-      "next_schedule_check": "2026-05-19"
+      "start_year": 2012,                   // earliest year to scrape in backfill
+
+      // Optional per-league category override for attack types
+      // "auto" parses NxB from h3 heading; fixed "2B"/"3B" overrides global default
+      "categories": {
+        "Muži": "3B"
+      },
+
+      // Optional: use {league}.cz domain instead of {league}.firesport.eu
+      // "standalone_domain": true
     },
-    "plpu": {
-      // Per-league category override — "auto" parses NxB/NB from the h3 heading.
-      // A fixed value ("2B"/"3B") overrides the global default for that category.
-      "categories": { "Muži": "auto" }
-    }
+    // ... ~50 more leagues
   }
 }
 ```
+
+Removed fields (from old scraper):
+- `pending_competitions` — schedule tracking no longer needed
+- `next_schedule_check` — schedule tracking no longer needed
+- `last_scraped_year` — not used by the new global-list approach
 
 ---
 
 ## Local debug workflow
 
-To inspect a specific year without touching the DB:
+To inspect a specific competition without touching the DB:
 
 ```bash
-# 1. Download the HTML
-python downloader.py --debug zl 2025 2025
-# → debug_output/zl/ZL.2025.html
+# 1. Download global list for 2025
+python downloader.py --global-list 2025 --debug
+# → debug_output/global_lists/vysledky-souteze-2025.html
 
-# 2. Parse and write CSV
-python scraper.py zl debug_output/zl -o debug_output/zl_2025.csv
+# 2. Parse to find competition link
+python3 << 'EOF'
+from scraper import parse_global_list
+with open('debug_output/global_lists/vysledky-souteze-2025.html') as f:
+    comps = parse_global_list(f.read())
+for c in comps[:5]:
+    print(f"{c['date']} | {c['place']} | {c['link']}")
+EOF
+
+# 3. Download the individual competition
+python downloader.py --competition vysledek-marsovice-14838.html --debug
+# → debug_output/competitions/vysledek-marsovice-14838.html
+
+# 4. Inspect results (or parse with scraper.scrape_individual_page() for full processing)
 ```
-
-The `--debug` flag is available on both scripts. The `debug_output/` folder is gitignored.
