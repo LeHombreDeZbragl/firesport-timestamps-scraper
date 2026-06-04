@@ -20,7 +20,6 @@ Example:
     python3 scraper.py plpu plpu/ -o plpu_results.csv
 """
 
-import argparse
 import csv
 import json
 import re
@@ -372,141 +371,6 @@ def parse_rows(
     return rows
 
 
-def scrape_html(
-    html_content: str,
-    source_name: str,
-    league_display: str,
-    global_categories: dict,
-    league_categories: dict,
-    interactive: bool = False,
-    full_config: dict | None = None,
-    full_league_name: str = '',
-    category_aliases: dict | None = None,
-    compound_prefixes: set[str] | None = None,
-) -> list:
-    """Parse HTML content string and return all extracted result rows.
-
-    This is the core parsing function used by the orchestrator (in-memory
-    pipeline).  scrape_file() is a file-based wrapper around this function.
-
-    Args:
-        html_content:      Raw HTML string to parse.
-        source_name:       Label for warnings (e.g. filename or URL).
-        league_display:    League alias written to the 'league' column.
-        global_categories: Top-level category→attack_type mapping.
-        league_categories: Per-league overrides (may contain 'auto').
-        interactive:       Prompt for unknown categories when True, else skip.
-        full_config:       Full config dict for persisting new categories.
-        full_league_name:  Full human-readable league name for the DB column.
-        category_aliases:  Mapping of raw category names to display names
-                           (e.g. {"Finále": "Ostatní"}).
-        compound_prefixes: Set of first words that form two-word category names
-                           (e.g. {"Smíšený"} → "Smíšený dorost").
-    """
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    # Each competition event lives in <div id='tabs-NNNNN'>
-    tab_divs = soup.find_all('div', id=re.compile(r'^tabs-\d+$'))
-
-    all_rows = []
-    for tab_div in tab_divs:
-        # ── Place: first <h3> in the tab (the place-name heading) ───────────
-        place_h3 = tab_div.find('h3')
-        place = place_h3.get_text(strip=True) if place_h3 else ''
-
-        # ── Date: <b>Kdy: </b> → next sibling <td> ──────────────────────────
-        attack_date = ''
-        for b_tag in tab_div.find_all('b'):
-            if 'Kdy' in b_tag.get_text():
-                parent_td = b_tag.find_parent('td')
-                if parent_td:
-                    next_td = parent_td.find_next_sibling('td')
-                    if next_td:
-                        attack_date = parse_date(next_td.get_text(strip=True))
-                break
-
-        # ── Category sections ────────────────────────────────────────────────
-        # <h3>Category kolo soutěže číslo N, ..., NxB úzké</h3>
-        # <script>...</script>
-        # <table data-role="table">...</table>
-        cat_h3s = [
-            h for h in tab_div.find_all('h3')
-            if 'kolo soutěže' in h.get_text()
-        ]
-        # Pair each category heading with the corresponding data table by
-        # position (both lists are in document order within the tab div).
-        data_tables = tab_div.find_all('table', attrs={'data-role': 'table'})
-
-        if len(cat_h3s) != len(data_tables):
-            print(
-                f'Warning: {source_name} tab#{tab_div.get("id")}: '
-                f'{len(cat_h3s)} category headings but {len(data_tables)} '
-                f'data tables — pairing by index, extra entries will be skipped.',
-                file=sys.stderr,
-            )
-
-        for h3, table in zip(cat_h3s, data_tables):
-            h3_text = h3.get_text(strip=True)
-            category = get_category(h3_text, compound_prefixes)
-            if category_aliases:
-                category = category_aliases.get(category, category)
-            attack_type = resolve_attack_type(
-                category,
-                h3_text,
-                global_categories,
-                league_categories,
-                source_name=source_name,
-                interactive=interactive,
-                full_config=full_config,
-            )
-            if attack_type is None:
-                continue  # unknown category in automated mode — skip rows
-            rows = parse_rows(table, attack_date, league_display, place, attack_type, category, full_league_name, old_layout=True)
-            all_rows.extend(rows)
-
-    return all_rows
-
-
-def scrape_schedule(html_content: str) -> list:
-    """Extract competition schedule metadata from an HTML year page.
-
-    Works on pages where competitions are listed but results are not yet
-    published — does not require result tables to be present.
-
-    Returns a list of dicts with keys:
-        date        (str)   'YYYY-MM-DD' of the competition
-        place       (str)   place name from the first <h3> in the tab
-        has_results (bool)  True if the tab contains at least one result table
-
-    Tabs without a parseable date are silently skipped.
-    """
-    soup = BeautifulSoup(html_content, 'html.parser')
-    tab_divs = soup.find_all('div', id=re.compile(r'^tabs-\d+$'))
-
-    schedule = []
-    for tab_div in tab_divs:
-        place_h3 = tab_div.find('h3')
-        place = place_h3.get_text(strip=True) if place_h3 else ''
-
-        attack_date = ''
-        for b_tag in tab_div.find_all('b'):
-            if 'Kdy' in b_tag.get_text():
-                parent_td = b_tag.find_parent('td')
-                if parent_td:
-                    next_td = parent_td.find_next_sibling('td')
-                    if next_td:
-                        attack_date = parse_date(next_td.get_text(strip=True))
-                break
-
-        if not attack_date:
-            continue  # skip tabs without a parseable date
-
-        has_results = bool(tab_div.find('table', attrs={'data-role': 'table'}))
-        schedule.append({'date': attack_date, 'place': place, 'has_results': has_results})
-
-    return schedule
-
-
 def parse_global_list(html_content: str, source_name: str = 'global_list') -> list:
     """Parse global competition list from vysledky-souteze-YYYY.htm.
     
@@ -644,8 +508,23 @@ def scrape_individual_page(
     
     attack_date = meta.get('date', '')
     place = meta.get('place', '')
+    place_district = meta.get('district', '')
     link = meta.get('link', '')
     league_display = meta.get('league', '')
+    
+    # Abbreviate and format place with district code
+    if place_district and district_map:
+        if place_district in district_map:
+            place_district = district_map[place_district]
+        else:
+            print(
+                f"Warning: District '{place_district}' not found in district_abbreviations map — "
+                f"using original name",
+                file=sys.stderr,
+            )
+    
+    if place_district:
+        place = f'{place}/{place_district}'
     
     all_rows = []
     
@@ -696,100 +575,3 @@ def scrape_individual_page(
         all_rows.extend(rows)
     
     return all_rows
-
-
-def scrape_file(
-    html_path: Path,
-    league_display: str,
-    global_categories: dict,
-    league_categories: dict,
-    interactive: bool = True,
-    full_config: dict | None = None,
-) -> list:
-    """Parse one HTML file and return all extracted result rows.
-
-    Convenience wrapper around scrape_html() for file-based (debug) workflows.
-    The orchestrator uses scrape_html() directly with in-memory HTML strings.
-    """
-    with open(html_path, encoding='utf-8', errors='replace') as f:
-        html_content = f.read()
-    return scrape_html(
-        html_content,
-        html_path.name,
-        league_display,
-        global_categories,
-        league_categories,
-        interactive=interactive,
-        full_config=full_config,
-    )
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description='Scrape firesport.eu HTML result pages to CSV.'
-    )
-    parser.add_argument(
-        'league_key',
-        help='League key matching config.json (e.g. zl, excr, plpu)',
-    )
-    parser.add_argument('input_dir', help='Directory containing HTML files to scrape')
-    parser.add_argument('-o', '--output', required=True, help='Output CSV file path')
-    args = parser.parse_args()
-
-    input_dir = Path(args.input_dir)
-    if not input_dir.is_dir():
-        print(f'Error: {args.input_dir!r} is not a directory', file=sys.stderr)
-        sys.exit(1)
-
-    html_files = sorted(input_dir.glob('*.html'))
-    if not html_files:
-        print(f'No HTML files found in {args.input_dir!r}', file=sys.stderr)
-        sys.exit(1)
-
-    config_path = Path(_CONFIG_FILE)
-    try:
-        config = load_config(config_path)
-    except FileNotFoundError as e:
-        print(f'Error: {e}', file=sys.stderr)
-        sys.exit(1)
-
-    league_key = args.league_key.lower()
-    global_categories = config.get('categories', {})
-    league_categories = get_league_categories(config, league_key)
-
-    # Use display_name from config if available, else fall back to upper-cased key
-    league_display = (
-        config.get('leagues', {})
-        .get(league_key, {})
-        .get('display_name', args.league_key.upper())
-    )
-
-    fieldnames = [
-        'attack_date', 'league', 'full_league_name', 'place', 'placement',
-        'attack_type', 'category', 'team', 'lp', 'pp',
-        'only_final_time', 'link',
-    ]
-
-    total_rows = 0
-    with open(args.output, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-
-        for html_path in html_files:
-            rows = scrape_file(
-                html_path,
-                league_display,
-                global_categories,
-                league_categories,
-                interactive=True,
-                full_config=config,
-            )
-            writer.writerows(rows)
-            total_rows += len(rows)
-            print(f'  {html_path.name}: {len(rows)} rows')
-
-    print(f'\nTotal: {total_rows} rows → {args.output}')
-
-
-if __name__ == '__main__':
-    main()

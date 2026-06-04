@@ -208,7 +208,6 @@
       "display_name": "OSHK",
       "full_league_name": "Plamen okres Klatovy",
       "start_year": 2000,
-      "standalone_domain": true,
       "categories": {
         "Muži": "auto"
       }
@@ -382,7 +381,6 @@
       "display_name": "ZCHL",
       "full_league_name": "Západočeská hasičská liga",
       "start_year": 2004,
-      "standalone_domain": true,
       "categories": {
         "Muži": "auto"
       }

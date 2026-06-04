@@ -109,7 +109,7 @@ def _resolve_competition_meta(comp: dict, league_lookup: dict) -> dict | None:
     """
     league = (comp.get('league') or '').strip()
     district = comp.get('district', '').strip()
-    place_full = f"{comp['place']} /{district}" if district else comp['place']
+    place_full = f"{comp['place']}" if district else comp['place']
 
     if league == 'FSEU':
         return {

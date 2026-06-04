@@ -32,33 +32,10 @@ from pathlib import Path
 
 import requests
 
-_BASE_URL = 'https://{league}.firesport.eu/web_souteze.php?akce=sel&rok={year}'
-_BASE_URL_STANDALONE = 'https://{league}.cz/web_souteze.php?akce=sel&rok={year}'
+
 _BASE_URL_GLOBAL_LIST = 'https://www.firesport.eu/vysledky-souteze-{year}'
 _BASE_URL_COMPETITION = 'https://www.firesport.eu/{link}'
 _TIMEOUT = 30  # seconds
-
-
-def download_html(league: str, year: int, standalone_domain: bool = False) -> str:
-    """Download the competition-list page for a league/year and return HTML.
-
-    Args:
-        league:           League URL slug (e.g. 'zl', 'excr', 'vcbl').
-        year:             Season year.
-        standalone_domain: When True, uses {league}.cz instead of
-                          {league}.firesport.eu (for leagues with their own domain).
-
-    Returns:
-        Raw HTML as a string.
-
-    Raises:
-        requests.RequestException on network or HTTP errors.
-    """
-    template = _BASE_URL_STANDALONE if standalone_domain else _BASE_URL
-    url = template.format(league=league.lower(), year=year)
-    response = requests.get(url, timeout=_TIMEOUT)
-    response.raise_for_status()
-    return response.text
 
 
 def download_global_list(year: int) -> str:
@@ -97,26 +74,6 @@ def download_competition_page(link: str) -> str:
     return response.text
 
 
-def download_league_data(league: str, start_year: int, end_year: int, output_dir: Path) -> None:
-    """Download HTML files for a league across multiple years and save to disk.
-
-    Args:
-        league:     League URL slug.
-        start_year: First year to download.
-        end_year:   Last year to download (inclusive).
-        output_dir: Directory to save files into (created if absent).
-    """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    for year in range(start_year, end_year + 1):
-        try:
-            html = download_html(league, year)
-            output_file = output_dir / f'{league.upper()}.{year}.html'
-            output_file.write_text(html, encoding='utf-8')
-            print(f'Saved {output_file}')
-        except requests.RequestException as exc:
-            print(f'Error downloading {league} {year}: {exc}', file=sys.stderr)
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(
         description='Download firesport.eu HTML pages.'
@@ -136,23 +93,6 @@ def main() -> None:
         '--competition',
         metavar='LINK',
         help='Download a specific competition page (relative link, e.g., vysledek-marsovice-14838.html).',
-    )
-    parser.add_argument(
-        'league',
-        nargs='?',
-        help='League URL slug (e.g. zl, excr, vcbl) — required for legacy mode.',
-    )
-    parser.add_argument(
-        'start_year',
-        type=int,
-        nargs='?',
-        help='First year to download — required for legacy mode.',
-    )
-    parser.add_argument(
-        'end_year',
-        type=int,
-        nargs='?',
-        help='Last year to download (inclusive) — required for legacy mode.',
     )
     args = parser.parse_args()
 
@@ -191,17 +131,8 @@ def main() -> None:
             sys.exit(1)
         return
 
-    # Legacy per-league-year mode
-    if not args.league or args.start_year is None or args.end_year is None:
-        parser.print_help()
-        sys.exit(1)
-
-    if args.debug:
-        output_dir = Path('debug_output') / args.league.lower()
-    else:
-        output_dir = Path(args.league.lower())
-
-    download_league_data(args.league, args.start_year, args.end_year, output_dir)
+    parser.print_help()
+    sys.exit(1)
 
 
 if __name__ == '__main__':

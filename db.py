@@ -104,7 +104,7 @@ def get_scraped_links(client: Client, year: int) -> set[str]:
             .select('link')
             .gte('attack_date', f'{year}-01-01')
             .lte('attack_date', f'{year}-12-31')
-            .not_('link', 'is', None)
+            .filter('link', 'not.is', 'null')
             .range(offset, offset + _PAGE_SIZE - 1)
             .execute()
         )
