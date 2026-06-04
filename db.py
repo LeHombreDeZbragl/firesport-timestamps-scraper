@@ -14,6 +14,8 @@ Expected schema for public.timestamps:
     pp               real     nullable — second individual attempt time
     only_final_time  boolean  default false — lp/pp are the same final time
                               because individual times were not recorded
+    link             text     nullable — relative URL of the competition page
+                              (e.g., vysledek-marsovice-14838.html)
 """
 
 import os
@@ -78,6 +80,42 @@ def get_existing_competitions(
             break
         offset += _PAGE_SIZE
     return existing
+
+
+def get_scraped_links(client: Client, year: int) -> set[str]:
+    """Return all known competition links for a given year.
+
+    Queries for DISTINCT link values where attack_date falls within the year
+    and link is NOT NULL. Used for competition-level deduplication to avoid
+    re-scraping pages that have already been processed.
+
+    Args:
+        client: Authenticated Supabase client.
+        year:   Calendar year to filter by.
+
+    Returns:
+        set[str] of relative URLs (e.g., 'vysledek-marsovice-14838.html').
+    """
+    links: set[str] = set()
+    offset = 0
+    while True:
+        result = (
+            client.table(_TABLE)
+            .select('link')
+            .gte('attack_date', f'{year}-01-01')
+            .lte('attack_date', f'{year}-12-31')
+            .not_('link', 'is', None)
+            .range(offset, offset + _PAGE_SIZE - 1)
+            .execute()
+        )
+        for row in result.data:
+            link = row.get('link', '').strip()
+            if link:
+                links.add(link)
+        if len(result.data) < _PAGE_SIZE:
+            break
+        offset += _PAGE_SIZE
+    return links
 
 
 def get_category_attack_types(

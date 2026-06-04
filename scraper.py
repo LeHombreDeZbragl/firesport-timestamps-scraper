@@ -62,12 +62,16 @@ def parse_date(date_str: str) -> str:
     return ''
 
 
-def extract_team(td_team: Tag, td_district: Tag) -> str:
+def extract_team(td_team: Tag, td_district: Tag, district_map: dict | None = None) -> str:
     """Build 'TeamName [Suffix]/District' from the team and district cells.
 
     The team cell contains an optional &nbsp; + <a>Name</a> + optional suffix
     text (e.g. 'B', 'PN', 'Cirkus').  The district cell contains the short
     district code inside an <a> tag.
+    
+    If district_map is provided, attempts to map the full district name to a
+    short SPZ code (e.g. 'Žďár nad Sázavou' → 'ZR'). If the mapping is not
+    found, warns and uses the original full name.
     """
     a_tag = td_team.find('a')
     if a_tag:
@@ -93,6 +97,17 @@ def extract_team(td_team: Tag, td_district: Tag) -> str:
         a_dist.get_text(strip=True) if a_dist
         else td_district.get_text(strip=True).strip()
     )
+
+    # If district_map provided, map full district name to SPZ code
+    if district and district_map:
+        if district in district_map:
+            district = district_map[district]
+        else:
+            print(
+                f"Warning: District '{district}' not found in district_abbreviations map — "
+                f"using original name",
+                file=sys.stderr,
+            )
 
     parts = [name]
     if suffix:
@@ -267,8 +282,25 @@ def parse_rows(
     attack_type: str,
     category: str,
     full_league_name: str = '',
+    district_map: dict | None = None,
+    old_layout: bool = True,
+    link: str = '',
 ) -> list:
-    """Extract result rows from a data table element."""
+    """Extract result rows from a data table element.
+    
+    Args:
+        table:             Data table element to parse.
+        attack_date:       Competition date (YYYY-MM-DD).
+        league:            League display name or key.
+        place:             Competition place name.
+        attack_type:       Attack type (2B, 3B, or Ostatní).
+        category:          Category name (Muži, Ženy, etc.).
+        full_league_name:  Full human-readable league name.
+        district_map:      Optional mapping of full district names to SPZ codes.
+        old_layout:        If True, uses old column layout (td[2]=time, td[3]=district).
+                          If False, uses new column layout (td[2]=district, td[3]=time).
+        link:              Relative URL of the competition page (e.g., 'vysledek-*.html').
+    """
     rows = []
     for tbody in table.find_all('tbody'):
         for tr in tbody.find_all('tr', recursive=False):
@@ -284,11 +316,21 @@ def parse_rows(
             if not placement_raw.isdigit():
                 continue  # skip header-like / malformed rows
 
-            # td[1]: team name + optional suffix; td[3]: district code
-            team = extract_team(tds[1], tds[3])
+            # Column layout varies between old and new pages
+            if old_layout:
+                # Old layout: td[0]=placement, td[1]=team, td[2]=final_time, td[3]=district, td[4]=lp, td[5]=pp
+                time_idx = 2
+                district_idx = 3
+            else:
+                # New layout: td[0]=placement, td[1]=team, td[2]=district, td[3]=final_time, td[4]=lp, td[5]=pp
+                time_idx = 3
+                district_idx = 2
 
-            # td[2]: final/combined time inside <b> (for only_final_time detection)
-            b_final = tds[2].find('b')
+            # td[1]: team name + optional suffix; district cell is at time_idx or district_idx
+            team = extract_team(tds[1], tds[district_idx], district_map=district_map)
+
+            # Final/combined time inside <b> (for only_final_time detection)
+            b_final = tds[time_idx].find('b')
             final_time = parse_time(b_final.get_text(strip=True)) if b_final else ''
 
             # td[4]: first attempt (lp), td[5]: second attempt (pp)
@@ -325,6 +367,7 @@ def parse_rows(
                 'lp': lp,
                 'pp': pp,
                 'only_final_time': only_final_time,
+                'link': link,
             })
     return rows
 
@@ -418,7 +461,7 @@ def scrape_html(
             )
             if attack_type is None:
                 continue  # unknown category in automated mode — skip rows
-            rows = parse_rows(table, attack_date, league_display, place, attack_type, category, full_league_name)
+            rows = parse_rows(table, attack_date, league_display, place, attack_type, category, full_league_name, old_layout=True)
             all_rows.extend(rows)
 
     return all_rows
@@ -462,6 +505,197 @@ def scrape_schedule(html_content: str) -> list:
         schedule.append({'date': attack_date, 'place': place, 'has_results': has_results})
 
     return schedule
+
+
+def parse_global_list(html_content: str, source_name: str = 'global_list') -> list:
+    """Parse global competition list from vysledky-souteze-YYYY.htm.
+    
+    Extracts metadata from <table id="tabulkakal"> rows:
+      - Date as YYYY-MM-DD (from <b>YYYY/MM/DD</b>)
+      - Place name (text before first comma, e.g., 'Dolní Hradiště' from 
+        'Dolní Hradiště, ICE CUP 2025')
+      - Relative link (href attribute, e.g., 'vysledek-dolni-hradiste-14484.html')
+      - District (full name, e.g., 'Plzeň-sever')
+      - League display name from the fourth column <a> tag
+    
+    Returns a list of dicts with keys:
+        date          (str)   'YYYY-MM-DD'
+        place         (str)   place name (first part of competition title)
+        link          (str)   relative URL (e.g., 'vysledek-*.html')
+        district      (str)   full district name (e.g., 'Žďár nad Sázavou')
+        league        (str)   league display name or 'FSEU' if unlabeled
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    table = soup.find('table', id='tabulkakal')
+    if not table:
+        print(
+            f"Warning: {source_name}: No table with id='tabulkakal' found",
+            file=sys.stderr,
+        )
+        return []
+    
+    competitions = []
+    tbody = table.find('tbody')
+    if not tbody:
+        return []
+    
+    for tr in tbody.find_all('tr', recursive=False):
+        tds = tr.find_all('td', recursive=False)
+        if len(tds) < 4:
+            continue
+        
+        # td[0]: date as <b>YYYY/MM/DD</b>
+        b_date = tds[0].find('b')
+        if b_date:
+            date_str = b_date.get_text(strip=True)
+            # Convert YYYY/MM/DD to YYYY-MM-DD
+            parts = date_str.split('/')
+            if len(parts) == 3:
+                try:
+                    year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+                    date = f'{year}-{month:02d}-{day:02d}'
+                except (ValueError, IndexError):
+                    continue
+            else:
+                continue
+        else:
+            continue
+        
+        # td[1]: place and link from <a href="...">PlaceName, EventName</a>
+        a_place = tds[1].find('a')
+        if not a_place:
+            continue
+        
+        full_text = a_place.get_text(strip=True)
+        # Extract place name (before first comma)
+        place = full_text.split(',')[0].strip() if ',' in full_text else full_text
+        
+        link = a_place.get('href', '').strip()
+        if not link:
+            continue
+        
+        # td[2]: district (full name, not linked)
+        district = tds[2].get_text(strip=True)
+        
+        # td[3]: league from <a>LeagueName</a> or plain text
+        a_league = tds[3].find('a')
+        league = (
+            a_league.get_text(strip=True) if a_league
+            else tds[3].get_text(strip=True)
+        )
+        # If empty or whitespace-only, mark as FSEU (unlabeled)
+        if not league:
+            league = 'FSEU'
+        
+        competitions.append({
+            'date': date,
+            'place': place,
+            'link': link,
+            'district': district,
+            'league': league,
+        })
+    
+    return competitions
+
+
+def scrape_individual_page(
+    html_content: str,
+    meta: dict,
+    global_categories: dict,
+    league_categories: dict,
+    district_map: dict,
+    source_name: str,
+    interactive: bool = False,
+    full_config: dict | None = None,
+    full_league_name: str = '',
+    category_aliases: dict | None = None,
+    compound_prefixes: set[str] | None = None,
+) -> list:
+    """Parse an individual competition result page (vysledek-*.html).
+    
+    Uses new column layout with <div id='tabs-1'> structure (not tabs-NNNNN).
+    
+    Args:
+        html_content:      Raw HTML string.
+        meta:              Competition metadata dict with keys:
+                          'date', 'place', 'link', 'district', 'league'
+        global_categories: Top-level category→attack_type mapping.
+        league_categories: Per-league overrides (may contain 'auto').
+        district_map:      Mapping of full district names to SPZ codes.
+        source_name:       Label for warnings (filename or URL).
+        interactive:       Prompt for unknown categories when True.
+        full_config:       Full config dict for persisting new categories.
+        full_league_name:  Full human-readable league name.
+        category_aliases:  Mapping of raw category names to display names.
+        compound_prefixes: Set of first words forming two-word categories.
+    
+    Returns list of extracted result row dicts (includes 'link' field).
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # Individual pages have a single <div id='tabs-1'>
+    tab_div = soup.find('div', id='tabs-1')
+    if not tab_div:
+        print(
+            f"Warning: {source_name}: No <div id='tabs-1'> found",
+            file=sys.stderr,
+        )
+        return []
+    
+    attack_date = meta.get('date', '')
+    place = meta.get('place', '')
+    link = meta.get('link', '')
+    league_display = meta.get('league', '')
+    
+    all_rows = []
+    
+    # Category sections in the new layout
+    cat_h3s = [
+        h for h in tab_div.find_all('h3')
+        if 'kolo soutěže' in h.get_text()
+    ]
+    data_tables = tab_div.find_all('table', attrs={'data-role': 'table'})
+    
+    if len(cat_h3s) != len(data_tables):
+        print(
+            f'Warning: {source_name}: {len(cat_h3s)} category headings but '
+            f'{len(data_tables)} data tables — pairing by index.',
+            file=sys.stderr,
+        )
+    
+    for h3, table in zip(cat_h3s, data_tables):
+        h3_text = h3.get_text(strip=True)
+        category = get_category(h3_text, compound_prefixes)
+        if category_aliases:
+            category = category_aliases.get(category, category)
+        
+        attack_type = resolve_attack_type(
+            category,
+            h3_text,
+            global_categories,
+            league_categories,
+            source_name=source_name,
+            interactive=interactive,
+            full_config=full_config,
+        )
+        if attack_type is None:
+            continue  # unknown category in automated mode — skip rows
+        
+        rows = parse_rows(
+            table,
+            attack_date,
+            league_display,
+            place,
+            attack_type,
+            category,
+            full_league_name,
+            district_map=district_map,
+            old_layout=False,  # new layout: district at td[2], time at td[3]
+            link=link,
+        )
+        all_rows.extend(rows)
+    
+    return all_rows
 
 
 def scrape_file(
@@ -533,7 +767,7 @@ def main() -> None:
     fieldnames = [
         'attack_date', 'league', 'full_league_name', 'place', 'placement',
         'attack_type', 'category', 'team', 'lp', 'pp',
-        'only_final_time',
+        'only_final_time', 'link',
     ]
 
     total_rows = 0
