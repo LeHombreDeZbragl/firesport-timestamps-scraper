@@ -1,26 +1,17 @@
 #!/usr/bin/env python3
 """Firesport timestamps scraper.
 
-Scrapes downloaded competition result HTML pages from firesport.eu and writes
-a CSV with columns:
-    attack_date, league, place, placement, attack_type, category, team, lp, pp
+Pure HTML→dict parsing for firesport.eu competition pages.
+No CLI, no I/O — call parse_global_list() or scrape_individual_page() directly.
 
 The attack_type (2B or 3B) is resolved via a three-tier lookup:
   1. Per-league override in config.json ("categories" inside the league entry).
-     Use "ignore" to blacklist a category, or "auto" to parse the type directly 
+     Use "ignore" to blacklist a category, or "auto" to parse the type directly
      from the HTML heading.
   2. Global default in config.json top-level "categories".
   3. Interactive prompt (debug mode) or warning+skip (automated mode).
-
-Usage:
-    python3 scraper.py <league_key> <input_dir> -o <output_file>
-
-Example:
-    python3 scraper.py zl zl/ -o zl_results.csv
-    python3 scraper.py plpu plpu/ -o plpu_results.csv
 """
 
-import csv
 import json
 import re
 import sys
@@ -282,11 +273,13 @@ def parse_rows(
     category: str,
     full_league_name: str = '',
     district_map: dict | None = None,
-    old_layout: bool = True,
     link: str = '',
 ) -> list:
     """Extract result rows from a data table element.
-    
+
+    Expects the current column layout: td[0]=placement, td[1]=team,
+    td[2]=district, td[3]=final_time, td[4]=lp, td[5]=pp.
+
     Args:
         table:             Data table element to parse.
         attack_date:       Competition date (YYYY-MM-DD).
@@ -296,8 +289,6 @@ def parse_rows(
         category:          Category name (Muži, Ženy, etc.).
         full_league_name:  Full human-readable league name.
         district_map:      Optional mapping of full district names to SPZ codes.
-        old_layout:        If True, uses old column layout (td[2]=time, td[3]=district).
-                          If False, uses new column layout (td[2]=district, td[3]=time).
         link:              Relative URL of the competition page (e.g., 'vysledek-*.html').
     """
     rows = []
@@ -315,17 +306,11 @@ def parse_rows(
             if not placement_raw.isdigit():
                 continue  # skip header-like / malformed rows
 
-            # Column layout varies between old and new pages
-            if old_layout:
-                # Old layout: td[0]=placement, td[1]=team, td[2]=final_time, td[3]=district, td[4]=lp, td[5]=pp
-                time_idx = 2
-                district_idx = 3
-            else:
-                # New layout: td[0]=placement, td[1]=team, td[2]=district, td[3]=final_time, td[4]=lp, td[5]=pp
-                time_idx = 3
-                district_idx = 2
+            # td[0]=placement, td[1]=team, td[2]=district, td[3]=final_time, td[4]=lp, td[5]=pp
+            time_idx = 3
+            district_idx = 2
 
-            # td[1]: team name + optional suffix; district cell is at time_idx or district_idx
+            # td[1]: team name + optional suffix; district cell is at district_idx
             team = extract_team(tds[1], tds[district_idx], district_map=district_map)
 
             # Final/combined time inside <b> (for only_final_time detection)
@@ -569,7 +554,6 @@ def scrape_individual_page(
             category,
             full_league_name,
             district_map=district_map,
-            old_layout=False,  # new layout: district at td[2], time at td[3]
             link=link,
         )
         all_rows.extend(rows)

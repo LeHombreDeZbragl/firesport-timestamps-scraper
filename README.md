@@ -59,9 +59,6 @@ html = downloader.download_global_list(year=2025)
 
 # Download individual competition page
 html = downloader.download_competition_page(link='vysledek-marsovice-14838.html')
-
-# (Deprecated) Download per-league-year page (legacy, no longer used by orchestrator)
-html = downloader.download_html(league_key='zl', year=2025)
 ```
 
 **Standalone CLI** for debugging:
@@ -72,9 +69,6 @@ python downloader.py --global-list 2025 --debug
 
 # Download individual competition to debug_output/competitions/
 python downloader.py --competition vysledek-marsovice-14838.html --debug
-
-# (Legacy) Download per-league-year page to debug_output/zl/
-python downloader.py --debug zl 2025 2025
 ```
 
 ---
@@ -98,9 +92,6 @@ rows = scraper.scrape_individual_page(
 )
 # → [{"attack_date": "2025-05-10", "place": "Maršovice /Žďár nad Sázavou", 
 #     "team": "Trnava/TR", "lp": "16.45", "pp": "16.45", "link": "vysledek-...", ...}, ...]
-
-# (Legacy) Parse per-league-year page results
-rows = scraper.scrape_html(html, ...)
 ```
 
 #### Attack type resolution
@@ -128,7 +119,6 @@ Wrapper around the Supabase Python client.
 | Function | What it does |
 |---|---|
 | `init_client()` | Loads `.env`, validates credentials, returns a `Client` |
-| `get_existing_competitions(client, league, year)` | Returns `{(date, place, category), ...}` already in the DB for row-level dedup |
 | `get_scraped_links(client, year)` | Returns `{link, ...}` already in the DB for competition-level dedup |
 | `get_category_attack_types(client, league)` | Returns `{category: {attack_type, ...}, ...}` for conflict detection in backfill |
 | `upload_records(client, records)` | Batch-inserts rows (500 at a time); converts empty lp/pp to `None` |
@@ -154,7 +144,7 @@ For the current year only:
 4. For each new competition:
    - Download the individual page
    - Parse results using `scrape_individual_page()`
-   - Upload any rows not already in the DB (row-level dedup via `(attack_date, place, category)` tuple)
+   - Upload all rows (competition-level link dedup in step 2 ensures no double-processing)
 
 If `--league KEY` is specified, only competitions for that league are processed (FSEU unlabeled competitions are excluded in per-league runs).
 
@@ -206,8 +196,7 @@ Table: `public.timestamps`
 | `only_final_time`| `boolean` | `true` when lp/pp are duplicated final time |
 | `link`           | `text`    | Nullable — relative URL of competition page (e.g., "vysledek-marsovice-14838.html") |
 
-**Deduplication keys**:
-- Row-level: `(attack_date, place, category)` — prevents duplicate rows within a competition
+**Deduplication key**:
 - Competition-level: `link` for a given year — prevents re-scraping the same page
 
 ---

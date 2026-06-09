@@ -5,24 +5,14 @@ Provides download functions for in-memory use by the orchestrator, and a CLI
 for manual/debug downloading to disk.
 
 Usage (CLI):
-    # Legacy per-league-year pages:
-    python downloader.py <league> <start_year> <end_year>
-    python downloader.py --debug <league> <start_year> <end_year>
-
-    # New global competition list pages:
-    python downloader.py --global-list <year>
-    python downloader.py --global-list <year> --debug
-
-    # Individual competition pages:
-    python downloader.py --competition <link>
-    python downloader.py --competition <link> --debug
+    python downloader.py --global-list <year> [--debug]
+    python downloader.py --competition <link> [--debug]
 
 Examples:
-    python downloader.py zl 2020 2025                           # Legacy
-    python downloader.py --global-list 2025                     # Global list for 2025
-    python downloader.py --competition vysledek-marsovice-14838.html
+    python downloader.py --global-list 2025 --debug
+    python downloader.py --competition vysledek-marsovice-14838.html --debug
 
-Without --debug: returns to stdout or keeps in memory
+Without --debug: prints HTML to stdout
 With    --debug: saves to debug_output/<type>/<filename>
 """
 

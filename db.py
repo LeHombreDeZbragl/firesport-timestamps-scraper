@@ -52,36 +52,6 @@ def init_client() -> Client:
     return create_client(url, key)
 
 
-def get_existing_competitions(
-    client: Client,
-    league_display: str,
-    year: int,
-) -> set[tuple[str, str, str]]:
-    """Return (attack_date, place, category) triples already present in the DB.
-
-    Only rows matching the given league and calendar year are considered.
-    Paginates automatically so years with many rows are fully covered.
-    """
-    existing: set[tuple[str, str, str]] = set()
-    offset = 0
-    while True:
-        result = (
-            client.table(_TABLE)
-            .select('attack_date, place, category')
-            .eq('league', league_display)
-            .gte('attack_date', f'{year}-01-01')
-            .lte('attack_date', f'{year}-12-31')
-            .range(offset, offset + _PAGE_SIZE - 1)
-            .execute()
-        )
-        for row in result.data:
-            existing.add((row['attack_date'], row['place'], row['category']))
-        if len(result.data) < _PAGE_SIZE:
-            break
-        offset += _PAGE_SIZE
-    return existing
-
-
 def get_scraped_links(client: Client, year: int) -> set[str]:
     """Return all known competition links for a given year.
 
