@@ -90,9 +90,10 @@ def extract_team(td_team: Tag, td_district: Tag, district_map: dict | None = Non
         else:
             print(
                 f"Warning: District '{district}' not found in district_abbreviations map — "
-                f"using original name",
+                f"using 'NP'",
                 file=sys.stderr,
             )
+            district = 'NP'
 
     parts = [name]
     if suffix:
@@ -452,9 +453,10 @@ def scrape_individual_page(
         else:
             print(
                 f"Warning: District '{place_district}' not found in district_abbreviations map — "
-                f"using original name",
+                f"using 'NP'",
                 file=sys.stderr,
             )
+            place_district = 'NP'
 
     if place_district:
         place = f'{place}/{place_district}'
