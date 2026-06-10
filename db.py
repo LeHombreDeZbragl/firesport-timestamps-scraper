@@ -6,7 +6,7 @@ Expected schema for public.timestamps:
     league           text     display name (ŽL, EXČR, VCB, ...)
     full_league_name text     full human-readable name (Žďárská liga, ...)
     place            text
-    placement        text
+    placement        smallint  NULL when raw value > 999
     attack_type      text     '2B' or '3B'
     category         text
     team             text

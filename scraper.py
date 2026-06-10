@@ -9,21 +9,16 @@ The attack_type (2B or 3B) is resolved via a three-tier lookup:
      Use "ignore" to blacklist a category, or "auto" to parse the type directly
      from the HTML heading.
   2. Global default in config.json top-level "categories".
-  3. Interactive prompt (debug mode) or warning+skip (automated mode).
+  3. Unknown category: warn and skip rows.
 """
 
-import json
 import re
 import sys
-from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 # Result values that should produce an empty lp/pp field
 _INVALID_TIME_STRS = frozenset({'NP', 'DSQ', 'MS', '-'})
-
-# Configuration file path
-_CONFIG_FILE = 'config.json'
 
 
 def parse_time(value: str) -> str:
@@ -58,7 +53,7 @@ def extract_team(td_team: Tag, td_district: Tag, district_map: dict | None = Non
     The team cell contains an optional &nbsp; + <a>Name</a> + optional suffix
     text (e.g. 'B', 'PN', 'Cirkus').  The district cell contains the short
     district code inside an <a> tag.
-    
+
     If district_map is provided, attempts to map the full district name to a
     short SPZ code (e.g. 'Žďár nad Sázavou' → 'ZR'). If the mapping is not
     found, warns and uses the original full name.
@@ -108,24 +103,6 @@ def extract_team(td_team: Tag, td_district: Tag, district_map: dict | None = Non
     return team
 
 
-def load_config(config_path: Path) -> dict:
-    """Load full config.json."""
-    if not config_path.exists():
-        raise FileNotFoundError(
-            f"Config file not found: {config_path}\n"
-            "Please create config.json (see config structure in project docs)."
-        )
-    with open(config_path, encoding='utf-8') as f:
-        return json.load(f)
-
-
-def save_config(config: dict, config_path: Path) -> None:
-    """Persist config back to disk."""
-    with open(config_path, 'w', encoding='utf-8') as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
-        f.write('\n')
-
-
 def get_league_categories(config: dict, league_key: str) -> dict:
     """Return per-league category overrides (may include 'auto' values)."""
     return (
@@ -135,18 +112,21 @@ def get_league_categories(config: dict, league_key: str) -> dict:
     )
 
 
-def get_category(h3_text: str, compound_prefixes: set[str] | None = None) -> str:
+def get_category(h3_text: str, known_categories: set[str] | None = None) -> str:
     """Return the category name extracted from the h3 heading.
 
-    For single-word categories (e.g. 'Muži', 'Ženy') returns the first word.
-    If the first word is listed in *compound_prefixes* and a second word exists,
-    returns the first two words (e.g. 'Smíšený dorost').
+    Matches the longest prefix of the heading words against *known_categories*.
+    Falls back to the first word when no match is found.
     """
     words = h3_text.strip().split()
     if not words:
         return ''
-    if compound_prefixes and words[0] in compound_prefixes and len(words) >= 2:
-        return f'{words[0]} {words[1]}'
+    if known_categories:
+        max_words = max((len(c.split()) for c in known_categories), default=1)
+        for n in range(min(max_words, len(words)), 0, -1):
+            candidate = ' '.join(words[:n])
+            if candidate in known_categories:
+                return candidate
     return words[0]
 
 
@@ -171,16 +151,13 @@ def resolve_attack_type(
     global_categories: dict,
     league_categories: dict,
     source_name: str,
-    interactive: bool = True,
-    full_config: dict | None = None,
 ) -> str | None:
     """Resolve the attack type for a category using three-tier lookup.
 
     Priority order:
       1. Per-league override (league_categories).
       2. Global default (global_categories).
-      3. Unknown: in interactive mode, prompt the user; in automated mode,
-         warn and return None (rows skipped by the caller).
+      3. Unknown: warn and return None (rows skipped by the caller).
 
     Mode values accepted at tiers 1 and 2:
       'ignore'   Blacklist — skip all rows for this category silently.
@@ -234,34 +211,13 @@ def resolve_attack_type(
         else:
             return global_val
 
-    # 3. Not found anywhere
-    if not interactive:
-        print(
-            f"Warning: Category '{category}' not in config — skipping rows "
-            f"from {source_name}",
-            file=sys.stderr,
-        )
-        return None
-
-    # Interactive: prompt user and persist to global categories
-    print(f"\nUnknown category '{category}' in {source_name}", file=sys.stderr)
-    while True:
-        user_input = input(
-            f"Enter attack type for '{category}' (2B or 3B), or 'skip' to stop: "
-        ).strip().upper()
-        if user_input == 'SKIP':
-            print('Stopping due to unknown category.', file=sys.stderr)
-            sys.exit(1)
-        if user_input in ('2B', '3B'):
-            global_categories[category] = user_input
-            if full_config is not None:
-                save_config(full_config, Path(_CONFIG_FILE))
-                print(
-                    f"✓ Added '{category}': '{user_input}' to {_CONFIG_FILE}",
-                    file=sys.stderr,
-                )
-            return user_input
-        print("Please enter '2B' or '3B'.", file=sys.stderr)
+    # 3. Not found anywhere — warn and skip
+    print(
+        f"Warning: Category '{category}' not in config — skipping rows "
+        f"from {source_name}",
+        file=sys.stderr,
+    )
+    return None
 
 
 def parse_rows(
@@ -358,15 +314,15 @@ def parse_rows(
 
 def parse_global_list(html_content: str, source_name: str = 'global_list') -> list:
     """Parse global competition list from vysledky-souteze-YYYY.htm.
-    
+
     Extracts metadata from <table id="tabulkakal"> rows:
       - Date as YYYY-MM-DD (from <b>YYYY/MM/DD</b>)
-      - Place name (text before first comma, e.g., 'Dolní Hradiště' from 
+      - Place name (text before first comma, e.g., 'Dolní Hradiště' from
         'Dolní Hradiště, ICE CUP 2025')
       - Relative link (href attribute, e.g., 'vysledek-dolni-hradiste-14484.html')
       - District (full name, e.g., 'Plzeň-sever')
       - League display name from the fourth column <a> tag
-    
+
     Returns a list of dicts with keys:
         date          (str)   'YYYY-MM-DD'
         place         (str)   place name (first part of competition title)
@@ -382,17 +338,17 @@ def parse_global_list(html_content: str, source_name: str = 'global_list') -> li
             file=sys.stderr,
         )
         return []
-    
+
     competitions = []
     tbody = table.find('tbody')
     if not tbody:
         return []
-    
+
     for tr in tbody.find_all('tr', recursive=False):
         tds = tr.find_all('td', recursive=False)
         if len(tds) < 4:
             continue
-        
+
         # td[0]: date as <b>YYYY/MM/DD</b>
         b_date = tds[0].find('b')
         if b_date:
@@ -409,23 +365,23 @@ def parse_global_list(html_content: str, source_name: str = 'global_list') -> li
                 continue
         else:
             continue
-        
+
         # td[1]: place and link from <a href="...">PlaceName, EventName</a>
         a_place = tds[1].find('a')
         if not a_place:
             continue
-        
+
         full_text = a_place.get_text(strip=True)
         # Extract place name (before first comma)
         place = full_text.split(',')[0].strip() if ',' in full_text else full_text
-        
+
         link = a_place.get('href', '').strip()
         if not link:
             continue
-        
+
         # td[2]: district (full name, not linked)
         district = tds[2].get_text(strip=True)
-        
+
         # td[3]: league from <a>LeagueName</a> or plain text
         a_league = tds[3].find('a')
         league = (
@@ -435,7 +391,7 @@ def parse_global_list(html_content: str, source_name: str = 'global_list') -> li
         # If empty or whitespace-only, mark as FSEU (unlabeled)
         if not league:
             league = 'FSEU'
-        
+
         competitions.append({
             'date': date,
             'place': place,
@@ -443,7 +399,7 @@ def parse_global_list(html_content: str, source_name: str = 'global_list') -> li
             'district': district,
             'league': league,
         })
-    
+
     return competitions
 
 
@@ -454,16 +410,12 @@ def scrape_individual_page(
     league_categories: dict,
     district_map: dict,
     source_name: str,
-    interactive: bool = False,
-    full_config: dict | None = None,
     full_league_name: str = '',
-    category_aliases: dict | None = None,
-    compound_prefixes: set[str] | None = None,
 ) -> list:
     """Parse an individual competition result page (vysledek-*.html).
-    
+
     Uses new column layout with <div id='tabs-1'> structure (not tabs-NNNNN).
-    
+
     Args:
         html_content:      Raw HTML string.
         meta:              Competition metadata dict with keys:
@@ -472,16 +424,12 @@ def scrape_individual_page(
         league_categories: Per-league overrides (may contain 'auto').
         district_map:      Mapping of full district names to SPZ codes.
         source_name:       Label for warnings (filename or URL).
-        interactive:       Prompt for unknown categories when True.
-        full_config:       Full config dict for persisting new categories.
         full_league_name:  Full human-readable league name.
-        category_aliases:  Mapping of raw category names to display names.
-        compound_prefixes: Set of first words forming two-word categories.
-    
+
     Returns list of extracted result row dicts (includes 'link' field).
     """
     soup = BeautifulSoup(html_content, 'html.parser')
-    
+
     # Individual pages have a single <div id='tabs-1'>
     tab_div = soup.find('div', id='tabs-1')
     if not tab_div:
@@ -490,13 +438,13 @@ def scrape_individual_page(
             file=sys.stderr,
         )
         return []
-    
+
     attack_date = meta.get('date', '')
     place = meta.get('place', '')
     place_district = meta.get('district', '')
     link = meta.get('link', '')
     league_display = meta.get('league', '')
-    
+
     # Abbreviate and format place with district code
     if place_district and district_map:
         if place_district in district_map:
@@ -507,44 +455,41 @@ def scrape_individual_page(
                 f"using original name",
                 file=sys.stderr,
             )
-    
+
     if place_district:
         place = f'{place}/{place_district}'
-    
+
     all_rows = []
-    
+    known_categories = set(global_categories) | set(league_categories)
+
     # Category sections in the new layout
     cat_h3s = [
         h for h in tab_div.find_all('h3')
         if 'kolo soutěže' in h.get_text()
     ]
     data_tables = tab_div.find_all('table', attrs={'data-role': 'table'})
-    
+
     if len(cat_h3s) != len(data_tables):
         print(
             f'Warning: {source_name}: {len(cat_h3s)} category headings but '
             f'{len(data_tables)} data tables — pairing by index.',
             file=sys.stderr,
         )
-    
+
     for h3, table in zip(cat_h3s, data_tables):
         h3_text = h3.get_text(strip=True)
-        category = get_category(h3_text, compound_prefixes)
-        if category_aliases:
-            category = category_aliases.get(category, category)
-        
+        category = get_category(h3_text, known_categories)
+
         attack_type = resolve_attack_type(
             category,
             h3_text,
             global_categories,
             league_categories,
             source_name=source_name,
-            interactive=interactive,
-            full_config=full_config,
         )
         if attack_type is None:
-            continue  # unknown category in automated mode — skip rows
-        
+            continue  # unknown category — skip rows
+
         rows = parse_rows(
             table,
             attack_date,
@@ -557,5 +502,5 @@ def scrape_individual_page(
             link=link,
         )
         all_rows.extend(rows)
-    
+
     return all_rows

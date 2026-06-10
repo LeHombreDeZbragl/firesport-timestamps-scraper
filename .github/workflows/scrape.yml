@@ -1,8 +1,5 @@
 name: Daily scrape
 
-permissions:
-  contents: write
-
 on:
   schedule:
     # 06:00 UTC every day
@@ -54,17 +51,3 @@ jobs:
             ARGS="$ARGS --league $LEAGUE"
           fi
           python orchestrator.py $ARGS
-
-      - name: Commit updated config.json
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add config.json
-          # Only commit if there is something staged
-          git diff --cached --quiet || git commit -m "chore: update config.json [skip ci]"
-
-      - name: Push
-        uses: ad-m/github-push-action@v0.8.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}

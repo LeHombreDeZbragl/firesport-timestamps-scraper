@@ -66,12 +66,6 @@ def load_config() -> dict:
         return json.load(f)
 
 
-def save_config(config: dict) -> None:
-    with open(_CONFIG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
-        f.write('\n')
-
-
 def _today() -> date:
     return date.today()
 
@@ -79,19 +73,30 @@ def _today() -> date:
 # ── League lookup helpers ─────────────────────────────────────────────────────
 
 def _build_league_lookup(leagues_config: dict) -> dict:
-    """Return {display_name: {league_key, full_league_name, league_categories}}.
+    """Return {name_or_alias: entry} for all leagues and their aliases.
 
-    Used to match league name strings from the global competition list against
-    configured league entries.
+    Each entry carries league_key, display_name, full_league_name,
+    league_categories.  The canonical display_name is registered plus every
+    alias listed under 'aliases'.  Warns on name/alias collisions across
+    different leagues.
     """
     lookup = {}
     for key, cfg in leagues_config.items():
         display_name = cfg.get('display_name', key)
-        lookup[display_name] = {
+        entry = {
             'league_key': key,
+            'display_name': display_name,
             'full_league_name': cfg.get('full_league_name', ''),
             'league_categories': cfg.get('categories', {}),
         }
+        for name in [display_name] + list(cfg.get('aliases', [])):
+            if name in lookup and lookup[name]['league_key'] != key:
+                print(
+                    f"Warning: League name/alias '{name}' is claimed by both "
+                    f"'{lookup[name]['league_key']}' and '{key}'",
+                    file=sys.stderr,
+                )
+            lookup[name] = entry
     return lookup
 
 
@@ -99,22 +104,18 @@ def _resolve_competition_meta(comp: dict, league_lookup: dict) -> dict | None:
     """Resolve a global list competition entry to a full meta dict.
 
     Returns an enriched dict with keys:
-        date, link, district
-        place             formatted as "PlaceName /DistrictName"
-        league            resolved display name, or None for FSEU
+        date, link, district, place
+        league            canonical display name, or None for FSEU
         full_league_name  full name, or None for FSEU
         league_categories per-league category overrides (empty dict for FSEU)
 
     Returns None for unknown leagues (warning is printed).
     """
     league = (comp.get('league') or '').strip()
-    district = comp.get('district', '').strip()
-    place_full = f"{comp['place']}" if district else comp['place']
 
     if league == 'FSEU':
         return {
             **comp,
-            'place': place_full,
             'league': None,        # stored as NULL in DB
             'full_league_name': None,
             'league_categories': {},
@@ -124,8 +125,7 @@ def _resolve_competition_meta(comp: dict, league_lookup: dict) -> dict | None:
         entry = league_lookup[league]
         return {
             **comp,
-            'place': place_full,
-            'league': league,
+            'league': entry['display_name'],
             'full_league_name': entry['full_league_name'],
             'league_categories': entry['league_categories'],
         }
@@ -196,17 +196,14 @@ def _check_attack_type_conflicts(
 
 # ── Competition processing ────────────────────────────────────────────────────
 
-def _process_competition(
-    client,
+def _download_and_scrape(
     comp_meta: dict,
     global_categories: dict,
     district_map: dict,
-    config: dict,
 ) -> list[dict]:
-    """Download, scrape, and upload a single competition page.
+    """Download and scrape a single competition page, returning parsed rows.
 
-    Returns the list of uploaded rows (empty if nothing was uploaded or an
-    error occurred).  Used by daily mode where no conflict detection is needed.
+    Returns empty list on download error.
     """
     link = comp_meta.get('link', '')
     league_label = comp_meta.get('league') or 'FSEU'
@@ -221,25 +218,35 @@ def _process_competition(
         )
         return []
 
-    rows = scraper.scrape_individual_page(
+    return scraper.scrape_individual_page(
         html,
         comp_meta,
         global_categories,
         comp_meta.get('league_categories', {}),
         district_map,
         source_name=link,
-        interactive=False,
-        full_config=config,
         full_league_name=comp_meta.get('full_league_name') or '',
-        category_aliases=config.get('category_aliases', {}),
-        compound_prefixes=set(config.get('compound_category_prefixes', [])),
     )
 
+
+def _process_competition(
+    client,
+    comp_meta: dict,
+    global_categories: dict,
+    district_map: dict,
+) -> list[dict]:
+    """Download, scrape, and upload a single competition page.
+
+    Returns the list of uploaded rows (empty if nothing was uploaded or an
+    error occurred).  Used by daily mode where no conflict detection is needed.
+    """
+    rows = _download_and_scrape(comp_meta, global_categories, district_map)
     if not rows:
         return []
 
     uploaded = db.upload_records(client, rows)
     if uploaded:
+        league_label = comp_meta.get('league') or 'FSEU'
         print(
             f'  [{league_label} {comp_meta["date"]}] '
             f'+ {comp_meta["place"]} ({uploaded} rows)'
@@ -297,7 +304,7 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
         if target_display is not None and meta.get('league') != target_display:
             continue
 
-        rows = _process_competition(client, meta, global_categories, district_map, config)
+        rows = _process_competition(client, meta, global_categories, district_map)
         total_uploaded += len(rows)
 
     print(f'\nDaily run complete. {total_uploaded} row(s) uploaded.')
@@ -349,6 +356,7 @@ def _run_backfill(
 
     failed_leagues: set = set()  # display names of leagues that had conflicts
     total_uploaded = 0
+    uploaded_by_league: dict = {}  # tracks per-league count for conflict-delete correction
 
     for year in year_range:
         print(f'\n── Year {year} ──────────────────────────────────────────────')
@@ -395,32 +403,8 @@ def _run_backfill(
             league_label = league_display or 'FSEU'
             league_cats = meta.get('league_categories', {})
             exempt = _exempt_categories(global_categories, league_cats)
-            link = meta['link']
 
-            # Download individual competition page
-            try:
-                comp_html = downloader.download_competition_page(link)
-            except Exception as exc:
-                print(
-                    f'  [{league_label} {meta["date"]}] Download failed for {link}: {exc}',
-                    file=sys.stderr,
-                )
-                continue
-
-            # Scrape
-            rows = scraper.scrape_individual_page(
-                comp_html,
-                meta,
-                global_categories,
-                league_cats,
-                district_map,
-                source_name=link,
-                interactive=False,
-                full_config=config,
-                full_league_name=meta.get('full_league_name') or '',
-                category_aliases=config.get('category_aliases', {}),
-                compound_prefixes=set(config.get('compound_category_prefixes', [])),
-            )
+            rows = _download_and_scrape(meta, global_categories, district_map)
 
             if not rows:
                 continue
@@ -446,6 +430,7 @@ def _run_backfill(
                         f'  Fix config.json category overrides then re-run:\n'
                         f'    python orchestrator.py --backfill --league {league_key}'
                     )
+                    total_uploaded -= uploaded_by_league.get(league_display, 0)
                     failed_leagues.add(league_display)
                     continue
 
@@ -453,6 +438,9 @@ def _run_backfill(
             uploaded = db.upload_records(client, rows)
             if uploaded:
                 total_uploaded += uploaded
+                uploaded_by_league[league_display] = (
+                    uploaded_by_league.get(league_display, 0) + uploaded
+                )
                 print(
                     f'  [{league_label} {year}] + {meta["place"]} ({uploaded} rows)'
                 )
@@ -510,4 +498,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-

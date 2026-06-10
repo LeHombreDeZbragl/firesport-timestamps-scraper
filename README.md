@@ -90,7 +90,7 @@ rows = scraper.scrape_individual_page(
     html, meta, global_categories, league_categories, district_map,
     source_name='vysledek-marsovice-14838.html'
 )
-# → [{"attack_date": "2025-05-10", "place": "Maršovice /Žďár nad Sázavou", 
+# → [{"attack_date": "2025-05-10", "place": "Maršovice/ZR", 
 #     "team": "Trnava/TR", "lp": "16.45", "pp": "16.45", "link": "vysledek-...", ...}, ...]
 ```
 
@@ -100,7 +100,7 @@ Each result row needs an `attack_type` value (`2B` or `3B`). The scraper resolve
 
 1. **Per-league override** in `config.json` — can be a fixed value (`"2B"` / `"3B"`) or `"auto"`, which parses the `NxB` pattern from the competition's h3 heading.
 2. **Global default** from the top-level `categories` map in `config.json`. All entries default to `"auto"`.
-3. **Interactive prompt** (debug CLI) or a warning + row skip (automated mode).
+3. Unknown category: a warning is printed and rows are skipped.
 
 #### `only_final_time` flag
 
@@ -186,8 +186,8 @@ Table: `public.timestamps`
 | `attack_date`    | `text`    | YYYY-MM-DD |
 | `league`         | `text`    | Display name (ŽL, EXČR, …) or NULL for FSEU |
 | `full_league_name` | `text`  | Full name (Žďárská liga, …) or NULL for FSEU |
-| `place`          | `text`    | "PlaceName /DistrictName" (e.g., "Maršovice /Žďár nad Sázavou") |
-| `placement`      | `text`    | Final ranking position |
+| `place`          | `text`    | "PlaceName/SPZ" (e.g., "Maršovice/ZR") |
+| `placement`      | `smallint` | Final ranking position (NULL if > 999) |
 | `attack_type`    | `text`    | `2B` or `3B` |
 | `category`       | `text`    | e.g. Muži, Ženy, Junioři |
 | `team`           | `text`    | "TeamName/SPZ" (e.g., "Trnava/TR") — SPZ code from district_abbreviations |
@@ -227,7 +227,7 @@ CREATE TABLE public.timestamps (
     league            text,
     full_league_name  text,
     place             text,
-    placement         text,
+    placement         smallint,
     attack_type       text,
     category          text,
     team              text,
@@ -281,10 +281,13 @@ The workflow (`.github/workflows/scrape.yml`) runs at **06:00 UTC every day**. I
 
 ```jsonc
 {
-  // Global attack type defaults keyed by category name
+  // Global attack type defaults keyed by category name.
+  // Multi-word categories (e.g. "Smíšený dorost") are detected automatically —
+  // the scraper matches the longest heading prefix against all configured names.
   "categories": {
     "Muži": "3B",
-    "Ženy": "2B"
+    "Ženy": "2B",
+    "Smíšený dorost": "Ostatní"
     // ...
   },
 
@@ -296,28 +299,21 @@ The workflow (`.github/workflows/scrape.yml`) runs at **06:00 UTC every day**. I
     // ... 59 total districts
   },
 
-  // Category display aliases (e.g., some competitions label the category differently)
-  "category_aliases": {
-    // "Raw category text from HTML": "Standardized name"
-  },
-
-  // First words that form compound category names (e.g., "Smíšený dorost")
-  "compound_category_prefixes": ["Smíšený", ...],
-
   "leagues": {
     "zl": {
       "display_name": "ŽL",                // used as the league value in the DB
       "full_league_name": "Žďárská liga",  // written to full_league_name column
       "start_year": 2012,                   // earliest year to scrape in backfill
 
+      // Optional: alternative names that appear in competition data (sponsor
+      // prefixes etc.). Matched exactly; canonical display_name is stored.
+      // "aliases": ["BIOMAC HE"],
+
       // Optional per-league category override for attack types
       // "auto" parses NxB from h3 heading; fixed "2B"/"3B" overrides global default
       "categories": {
         "Muži": "3B"
-      },
-
-      // Optional: use {league}.cz domain instead of {league}.firesport.eu
-      // "standalone_domain": true
+      }
     },
     // ... ~50 more leagues
   }

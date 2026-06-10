@@ -1,10 +1,4 @@
 {
-  "compound_category_prefixes": [
-    "Smíšený"
-  ],
-  "category_aliases": {
-    "Smíšený dorost": "Ostatní"
-  },
   "categories": {
     "Muži": "testing",
     "Ženy": "2B",
@@ -12,7 +6,7 @@
     "Juniorky": "2B",
     "Muži>35": "2B",
     "Ženy>30": "2B",
-    "Smíšený dorost": "testing",
+    "Smíšený dorost": "Ostatní",
     "Dorostenci": "testing",
     "Finále": "Ostatní",
     "Profi": "Ostatní",
@@ -109,6 +103,7 @@
       "display_name": "HE",
       "full_league_name": "Hanácká extraliga",
       "start_year": 2008,
+      "aliases": ["BIOMAC HE"],
       "categories": {
         "Muži": "auto"
       }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A scraper that pulls Czech firesport competition results from firesport.eu and writes them to a Supabase `public.timestamps` table. A daily GitHub Actions cron runs the pipeline and commits any `config.json` changes back to the repo. There is no build step, no linter, and no test suite.
+A scraper that pulls Czech firesport competition results from firesport.eu and writes them to a Supabase `public.timestamps` table. A daily GitHub Actions cron runs the pipeline. There is no build step, no linter, and no test suite.
 
 ## Commands
 
@@ -45,7 +45,7 @@ Four modules in a strict one-directional pipeline. **`orchestrator.py` is the on
 
 ### Attack-type resolution — the core domain logic
 
-Every result row needs an `attack_type`. This is the most intricate part of the codebase and is split between `config.json` and `scraper.resolve_attack_type()`. **Read that function's docstring before touching anything attack-type-related.** Three-tier lookup (per-league `categories` override → top-level `categories` default → interactive prompt / skip), where each config value is one of four *modes*:
+Every result row needs an `attack_type`. This is the most intricate part of the codebase and is split between `config.json` and `scraper.resolve_attack_type()`. **Read that function's docstring before touching anything attack-type-related.** Three-tier lookup (per-league `categories` override → top-level `categories` default → skip (warn)), where each config value is one of four *modes*:
 
 - `"2B"` / `"3B"` / `"Ostatní"` (any fixed string) — used as-is.
 - `"auto"` — parse `NxB` from the competition's h3 heading; silently fall back to `"Ostatní"`. **Exempt from backfill conflict detection.**
@@ -58,7 +58,7 @@ Every result row needs an `attack_type`. This is the most intricate part of the 
 
 ### config.json
 
-Committed to the repo **and auto-committed by CI** — interactive mode persists newly-answered categories back to it, and the workflow commits the result. Holds `leagues` (~50, each with display name, full name, `start_year`, optional `categories` override), the global `categories` map, `district_abbreviations` (full district name → SPZ code, e.g. "Žďár nad Sázavou" → "ZR"), `category_aliases`, and `compound_category_prefixes` (first words that form two-word categories like "Smíšený dorost").
+Committed to the repo. Holds `leagues` (~50, each with display name, full name, `start_year`, optional `categories` override, and optional `aliases` list for alternative names that appear in competition data), the global `categories` map, and `district_abbreviations` (full district name → SPZ code, e.g. "Žďár nad Sázavou" → "ZR"). Multi-word category names (e.g. "Smíšený dorost") are matched automatically — the scraper tries the longest prefix of the h3 heading that matches a configured category name.
 
 ### Parsing quirks worth knowing (in `scraper.py`)
 
