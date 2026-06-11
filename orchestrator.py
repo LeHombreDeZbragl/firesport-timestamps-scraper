@@ -51,6 +51,7 @@ from pathlib import Path
 import db
 import downloader
 import scraper
+from colors import cprint
 
 _CONFIG_FILE = Path('config.json')
 
@@ -60,7 +61,7 @@ _CONFIG_FILE = Path('config.json')
 
 def load_config() -> dict:
     if not _CONFIG_FILE.exists():
-        print(f'Error: {_CONFIG_FILE} not found.', file=sys.stderr)
+        cprint(f'Error: {_CONFIG_FILE} not found.', 'red', stream=sys.stderr)
         sys.exit(1)
     with open(_CONFIG_FILE, encoding='utf-8') as f:
         return json.load(f)
@@ -91,10 +92,10 @@ def _build_league_lookup(leagues_config: dict) -> dict:
         }
         for name in [display_name] + list(cfg.get('aliases', [])):
             if name in lookup and lookup[name]['league_key'] != key:
-                print(
+                cprint(
                     f"Warning: League name/alias '{name}' is claimed by both "
                     f"'{lookup[name]['league_key']}' and '{key}'",
-                    file=sys.stderr,
+                    'yellow', stream=sys.stderr,
                 )
             lookup[name] = entry
     return lookup
@@ -130,10 +131,10 @@ def _resolve_competition_meta(comp: dict, league_lookup: dict) -> dict | None:
             'league_categories': entry['league_categories'],
         }
 
-    print(
+    cprint(
         f"Warning: Skipping '{comp['place']}' ({comp['date']}): "
         f"unknown league '{league}'",
-        file=sys.stderr,
+        'yellow', stream=sys.stderr,
     )
     return None
 
@@ -213,10 +214,10 @@ def _download_and_scrape(
     try:
         html = downloader.download_competition_page(link)
     except Exception as exc:
-        print(
+        cprint(
             f'  [{league_label} {comp_meta.get("date")}] '
             f'Download failed for {link}: {exc}',
-            file=sys.stderr,
+            'red', stream=sys.stderr,
         )
         return []
 
@@ -256,9 +257,10 @@ def _process_competition(
     uploaded = db.upload_records(client, rows)
     if uploaded:
         league_label = comp_meta.get('league') or 'FSEU'
-        print(
+        cprint(
             f'  [{league_label} {comp_meta["date"]}] '
-            f'+ {comp_meta["place"]} ({uploaded} rows)'
+            f'+ {comp_meta["place"]} ({uploaded} rows)',
+            'green',
         )
     return rows if uploaded else []
 
@@ -274,18 +276,18 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
     other_categories = config.get('other_categories', [])
     leagues = config.get('leagues', {})
 
-    print(f'Fetching global competition list for {year} …')
+    cprint(f'Fetching global competition list for {year} …', 'blue')
     try:
         html = downloader.download_global_list(year)
     except Exception as exc:
-        print(f'Error: Could not download global list for {year}: {exc}', file=sys.stderr)
+        cprint(f'Error: Could not download global list for {year}: {exc}', 'red', stream=sys.stderr)
         sys.exit(1)
 
     competitions = scraper.parse_global_list(html, source_name=f'vysledky-souteze-{year}')
-    print(f'Found {len(competitions)} competitions in {year}.')
+    cprint(f'Found {len(competitions)} competitions in {year}.', 'blue')
 
     scraped_links = db.get_scraped_links(client, year)
-    print(f'{len(scraped_links)} competition(s) already scraped.')
+    cprint(f'{len(scraped_links)} competition(s) already scraped.', 'blue')
 
     league_lookup = _build_league_lookup(leagues)
 
@@ -295,13 +297,13 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
         if c['link'] not in scraped_links
         and c['date'] <= today.isoformat()
     ]
-    print(f'{len(new_comps)} new competition(s) to process.')
+    cprint(f'{len(new_comps)} new competition(s) to process.', 'blue')
 
     # Resolve league filter
     target_display: str | None = None
     if only_league:
         if only_league not in leagues:
-            print(f'Error: League key {only_league!r} not found in config.json.', file=sys.stderr)
+            cprint(f'Error: League key {only_league!r} not found in config.json.', 'red', stream=sys.stderr)
             sys.exit(1)
         target_display = leagues[only_league]['display_name']
 
@@ -321,7 +323,7 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
         )
         total_uploaded += len(rows)
 
-    print(f'\nDaily run complete. {total_uploaded} row(s) uploaded.')
+    cprint(f'\nDaily run complete. {total_uploaded} row(s) uploaded.', 'blue')
 
 
 # ── Backfill mode ─────────────────────────────────────────────────────────────
@@ -355,7 +357,7 @@ def _run_backfill(
     target_display: str | None = None
     if only_league:
         if only_league not in leagues:
-            print(f'Error: League key {only_league!r} not found in config.json.', file=sys.stderr)
+            cprint(f'Error: League key {only_league!r} not found in config.json.', 'red', stream=sys.stderr)
             sys.exit(1)
         target_display = leagues[only_league]['display_name']
 
@@ -375,16 +377,16 @@ def _run_backfill(
     uploaded_by_league: dict = {}  # tracks per-league count for conflict-delete correction
 
     for year in year_range:
-        print(f'\n── Year {year} ──────────────────────────────────────────────')
+        cprint(f'\n── Year {year} ──────────────────────────────────────────────', 'blue')
         try:
             html = downloader.download_global_list(year)
         except Exception as exc:
-            print(f'  Download failed for global list {year}: {exc}', file=sys.stderr)
+            cprint(f'  Download failed for global list {year}: {exc}', 'red', stream=sys.stderr)
             continue
 
         competitions = scraper.parse_global_list(html, source_name=f'vysledky-souteze-{year}')
         if not competitions:
-            print(f'  No competitions found for {year}.')
+            cprint(f'  No competitions found for {year}.', 'blue')
             continue
 
         scraped_links = db.get_scraped_links(client, year)
@@ -436,18 +438,20 @@ def _run_backfill(
                     rows, year, seen_by_league[league_display], league_label, exempt
                 )
                 if conflicts:
-                    print(
+                    cprint(
                         f'\n[{league_label}] CONFLICT detected in {year} — '
-                        f'aborting entire league backfill.'
+                        f'aborting entire league backfill.',
+                        'magenta',
                     )
                     for msg in conflicts:
-                        print(msg)
+                        cprint(msg, 'magenta')
                     deleted = db.delete_league_records(client, league_display)
                     league_key = league_lookup.get(league_display, {}).get('league_key', league_display)
-                    print(
+                    cprint(
                         f'  Deleted {deleted} row(s) for {league_label} from the DB.\n'
                         f'  Fix config.json category overrides then re-run:\n'
-                        f'    python orchestrator.py --backfill --league {league_key}'
+                        f'    python orchestrator.py --backfill --league {league_key}',
+                        'magenta',
                     )
                     total_uploaded -= uploaded_by_league.get(league_display, 0)
                     failed_leagues.add(league_display)
@@ -460,8 +464,9 @@ def _run_backfill(
                 uploaded_by_league[league_display] = (
                     uploaded_by_league.get(league_display, 0) + uploaded
                 )
-                print(
-                    f'  [{league_label} {year}] + {meta["place"]} ({uploaded} rows)'
+                cprint(
+                    f'  [{league_label} {year}] + {meta["place"]} ({uploaded} rows)',
+                    'green',
                 )
 
             # Update seen map for conflict detection in subsequent years
@@ -471,10 +476,10 @@ def _run_backfill(
                         row['category'], set()
                     ).add(row['attack_type'])
 
-    print(f'\nBackfill complete. Total rows uploaded: {total_uploaded}')
+    cprint(f'\nBackfill complete. Total rows uploaded: {total_uploaded}', 'blue')
     if failed_leagues:
         labels = sorted(str(l) for l in failed_leagues)
-        print(f'Leagues with conflicts (skipped): {labels}')
+        cprint(f'Leagues with conflicts (skipped): {labels}', 'magenta')
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

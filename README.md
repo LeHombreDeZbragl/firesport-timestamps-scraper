@@ -34,6 +34,7 @@ orchestrator.py          # main pipeline — daily and backfill modes
 downloader.py            # HTTP fetcher for global lists and individual pages
 scraper.py               # HTML parser for lists and individual pages
 db.py                    # Supabase client wrapper
+colors.py                # ANSI color helper for stdout/stderr messages
 config.json              # leagues, categories, district abbreviations (committed)
 requirements.txt         # Python dependencies
 .env                     # credentials — NOT committed (see .env.example)
@@ -135,6 +136,10 @@ Wrapper around the Supabase Python client.
 ### `orchestrator.py`
 
 Top-level coordinator. Calls downloader → scraper → db in sequence.
+
+#### Output colors
+
+Console messages are color-coded (via `colors.py`) so a run is easy to scan: **green** uploaded competitions, **red** errors, **orange** no-NxB-pattern warnings, **yellow** other warnings (district/category/structural), **white** excluded-keyword section skips, **magenta** backfill conflict/delete, **blue** progress/info. Color is auto-enabled only on an interactive terminal; redirecting to a file keeps it plain. Set `FORCE_COLOR=1` to keep color through a pipe/file (view with `less -R`) or `NO_COLOR=1` to disable it entirely.
 
 #### Daily mode (default)
 

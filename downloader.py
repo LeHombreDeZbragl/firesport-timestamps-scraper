@@ -22,6 +22,8 @@ from pathlib import Path
 
 import requests
 
+from colors import cprint
+
 
 _BASE_URL_GLOBAL_LIST = 'https://www.firesport.eu/vysledky-souteze-{year}'
 _BASE_URL_COMPETITION = 'https://www.firesport.eu/{link}'
@@ -99,7 +101,7 @@ def main() -> None:
             else:
                 print(html)
         except requests.RequestException as exc:
-            print(f'Error downloading global list for {args.global_list}: {exc}', file=sys.stderr)
+            cprint(f'Error downloading global list for {args.global_list}: {exc}', 'red', stream=sys.stderr)
             sys.exit(1)
         return
 
@@ -117,7 +119,7 @@ def main() -> None:
             else:
                 print(html)
         except requests.RequestException as exc:
-            print(f'Error downloading competition {args.competition}: {exc}', file=sys.stderr)
+            cprint(f'Error downloading competition {args.competition}: {exc}', 'red', stream=sys.stderr)
             sys.exit(1)
         return
 

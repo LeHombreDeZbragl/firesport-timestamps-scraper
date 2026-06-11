@@ -17,6 +17,8 @@ import sys
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
+from colors import cprint
+
 # Result values that should produce an empty lp/pp field
 _INVALID_TIME_STRS = frozenset({'NP', 'DSQ', 'MS', '-'})
 
@@ -88,10 +90,10 @@ def extract_team(td_team: Tag, td_district: Tag, district_map: dict | None = Non
         if district in district_map:
             district = district_map[district]
         else:
-            print(
+            cprint(
                 f"Warning: District '{district}' not found in district_abbreviations map — "
                 f"using 'NP'",
-                file=sys.stderr,
+                'yellow', stream=sys.stderr,
             )
             district = 'NP'
 
@@ -179,10 +181,10 @@ def resolve_attack_type(
         if attack_type:
             return attack_type
         if mode == 'testing':
-            print(
+            cprint(
                 f"Warning: {tier_label} 'testing' for '{category}' — "
                 f"no NxB pattern found in heading: {h3_text!r}  ({source_name})",
-                file=sys.stderr,
+                'orange', stream=sys.stderr,
             )
         return None  # 'auto' is silent
 
@@ -213,10 +215,10 @@ def resolve_attack_type(
             return global_val
 
     # 3. Not found anywhere — warn and skip
-    print(
+    cprint(
         f"Warning: Category '{category}' not in config — skipping rows "
         f"from {source_name}",
-        file=sys.stderr,
+        'yellow', stream=sys.stderr,
     )
     return None
 
@@ -289,10 +291,10 @@ def parse_rows(
 
             # Skip rows where lp or pp is less than 12
             if (lp and float(lp) < 12) or (pp and float(pp) < 12):
-                print(
+                cprint(
                     f"Warning: Skipping row for team '{team}' — "
                     f"lp or pp is less than 12 (lp={lp}, pp={pp})",
-                    file=sys.stderr,
+                    'yellow', stream=sys.stderr,
                 )
                 continue
 
@@ -334,9 +336,9 @@ def parse_global_list(html_content: str, source_name: str = 'global_list') -> li
     soup = BeautifulSoup(html_content, 'html.parser')
     table = soup.find('table', id='tabulkakal')
     if not table:
-        print(
+        cprint(
             f"Warning: {source_name}: No table with id='tabulkakal' found",
-            file=sys.stderr,
+            'yellow', stream=sys.stderr,
         )
         return []
 
@@ -442,9 +444,9 @@ def scrape_individual_page(
     # Individual pages have a single <div id='tabs-1'>
     tab_div = soup.find('div', id='tabs-1')
     if not tab_div:
-        print(
+        cprint(
             f"Warning: {source_name}: No <div id='tabs-1'> found",
-            file=sys.stderr,
+            'yellow', stream=sys.stderr,
         )
         return []
 
@@ -459,10 +461,10 @@ def scrape_individual_page(
         if place_district in district_map:
             place_district = district_map[place_district]
         else:
-            print(
+            cprint(
                 f"Warning: District '{place_district}' not found in district_abbreviations map — "
                 f"using 'NP'",
-                file=sys.stderr,
+                'yellow', stream=sys.stderr,
             )
             place_district = 'NP'
 
@@ -482,10 +484,10 @@ def scrape_individual_page(
     data_tables = tab_div.find_all('table', attrs={'data-role': 'table'})
 
     if len(cat_h3s) != len(data_tables):
-        print(
+        cprint(
             f'Warning: {source_name}: {len(cat_h3s)} category headings but '
             f'{len(data_tables)} data tables — pairing by index.',
-            file=sys.stderr,
+            'yellow', stream=sys.stderr,
         )
 
     for h3, table in zip(cat_h3s, data_tables):
@@ -495,10 +497,10 @@ def scrape_individual_page(
         lowered = h3_text.lower()
         hit = next((kw for kw in excluded_lower if kw in lowered), None)
         if hit:
-            print(
+            cprint(
                 f"Warning: {source_name}: skipping section — heading "
                 f"matched excluded keyword {hit!r}",
-                file=sys.stderr,
+                'white', stream=sys.stderr,
             )
             continue
 

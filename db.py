@@ -25,6 +25,8 @@ from dotenv import load_dotenv
 from postgrest.exceptions import APIError
 from supabase import Client, create_client
 
+from colors import cprint
+
 _TABLE = 'timestamps'
 # Supabase/PostgREST returns at most this many rows per request; also used as
 # the insert batch size to stay well within API payload limits.
@@ -43,10 +45,10 @@ def init_client() -> Client:
     url = os.environ.get('SUPABASE_URL', '').strip()
     key = os.environ.get('SUPABASE_KEY', '').strip()
     if not url or not key:
-        print(
+        cprint(
             'Error: SUPABASE_URL and SUPABASE_KEY must be set '
             'in the environment or in a .env file.',
-            file=sys.stderr,
+            'red', stream=sys.stderr,
         )
         sys.exit(1)
     return create_client(url, key)
@@ -189,7 +191,7 @@ def upload_records(client: Client, records: list[dict]) -> int:
         except APIError as exc:
             # PGRST204 = column not found in schema cache
             if exc.code == 'PGRST204' and 'only_final_time' in str(exc.message):
-                print(
+                cprint(
                     '\nError: The only_final_time column is missing from '
                     f'public.{_TABLE}.\n'
                     'Run the following SQL in the Supabase SQL Editor:\n\n'
@@ -197,7 +199,7 @@ def upload_records(client: Client, records: list[dict]) -> int:
                     '        ADD COLUMN IF NOT EXISTS only_final_time '
                     'boolean NOT NULL DEFAULT false;\n\n'
                     'Or run:  psql ... -f schema_migration.sql\n',
-                    file=sys.stderr,
+                    'red', stream=sys.stderr,
                 )
                 sys.exit(1)
             raise
