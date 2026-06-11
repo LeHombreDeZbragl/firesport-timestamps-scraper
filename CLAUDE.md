@@ -66,6 +66,6 @@ Committed to the repo. Holds `leagues` (~50, each with display name, full name, 
 ### Parsing quirks worth knowing (in `scraper.py`)
 
 - Times: comma→dot normalized; `NP`/`DSQ`/`MS`/`-`/`99.99`/non-numeric all become empty.
-- Rows where `lp` or `pp` < 12 are dropped as implausible.
+- Rows whose `lp`, `pp`, or final time fall outside the plausible `[12, 120]` second range are dropped as implausible (`_MIN_TIME` / `_MAX_TIME` in `scraper.py`).
 - `only_final_time`: when individual splits are absent but a final time exists, both `lp` and `pp` are set to the final time and this flag is set true.
 - `team` is formatted `"Name Suffix/SPZ"`; `place` is `"Place/SPZ"` — both via the `district_abbreviations` map.

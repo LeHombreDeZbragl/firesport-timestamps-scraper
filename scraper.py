@@ -22,6 +22,11 @@ from colors import cprint
 # Result values that should produce an empty lp/pp field
 _INVALID_TIME_STRS = frozenset({'NP', 'DSQ', 'MS', '-'})
 
+# Plausible attack-time bounds in seconds; rows whose lp/pp/final_time fall
+# outside this range are dropped as implausible.
+_MIN_TIME = 12.0
+_MAX_TIME = 120.0
+
 
 def parse_time(value: str) -> str:
     """Return a normalised time string (comma→dot), or '' for invalid values.
@@ -289,11 +294,18 @@ def parse_rows(
             else:
                 only_final_time = False
 
-            # Skip rows where lp or pp is less than 12
-            if (lp and float(lp) < 12) or (pp and float(pp) < 12):
+            # Skip rows whose lp/pp/final_time fall outside the plausible
+            # [_MIN_TIME, _MAX_TIME] second range.
+            checked = (('lp', lp), ('pp', pp), ('final_time', final_time))
+            out_of_range = [
+                f'{label}={val}'
+                for label, val in checked
+                if val and not (_MIN_TIME <= float(val) <= _MAX_TIME)
+            ]
+            if out_of_range:
                 cprint(
-                    f"Warning: Skipping row for team '{team}' — "
-                    f"lp or pp is less than 12 (lp={lp}, pp={pp})",
+                    f"Warning: Skipping row for team '{team}' — time(s) outside "
+                    f"[{_MIN_TIME:g}, {_MAX_TIME:g}] s: {', '.join(out_of_range)}",
                     'yellow', stream=sys.stderr,
                 )
                 continue
