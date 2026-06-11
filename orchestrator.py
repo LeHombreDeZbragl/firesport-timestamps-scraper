@@ -200,6 +200,8 @@ def _download_and_scrape(
     comp_meta: dict,
     global_categories: dict,
     district_map: dict,
+    excluded_keywords: list[str],
+    other_categories: list[str],
 ) -> list[dict]:
     """Download and scrape a single competition page, returning parsed rows.
 
@@ -226,6 +228,8 @@ def _download_and_scrape(
         district_map,
         source_name=link,
         full_league_name=comp_meta.get('full_league_name') or '',
+        excluded_keywords=excluded_keywords,
+        other_categories=other_categories,
     )
 
 
@@ -234,13 +238,18 @@ def _process_competition(
     comp_meta: dict,
     global_categories: dict,
     district_map: dict,
+    excluded_keywords: list[str],
+    other_categories: list[str],
 ) -> list[dict]:
     """Download, scrape, and upload a single competition page.
 
     Returns the list of uploaded rows (empty if nothing was uploaded or an
     error occurred).  Used by daily mode where no conflict detection is needed.
     """
-    rows = _download_and_scrape(comp_meta, global_categories, district_map)
+    rows = _download_and_scrape(
+        comp_meta, global_categories, district_map,
+        excluded_keywords, other_categories,
+    )
     if not rows:
         return []
 
@@ -261,6 +270,8 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
     year = today.year
     global_categories = config.get('categories', {})
     district_map = config.get('district_abbreviations', {})
+    excluded_keywords = config.get('excluded_keywords', [])
+    other_categories = config.get('other_categories', [])
     leagues = config.get('leagues', {})
 
     print(f'Fetching global competition list for {year} …')
@@ -304,7 +315,10 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
         if target_display is not None and meta.get('league') != target_display:
             continue
 
-        rows = _process_competition(client, meta, global_categories, district_map)
+        rows = _process_competition(
+            client, meta, global_categories, district_map,
+            excluded_keywords, other_categories,
+        )
         total_uploaded += len(rows)
 
     print(f'\nDaily run complete. {total_uploaded} row(s) uploaded.')
@@ -321,6 +335,8 @@ def _run_backfill(
     today = _today()
     global_categories = config.get('categories', {})
     district_map = config.get('district_abbreviations', {})
+    excluded_keywords = config.get('excluded_keywords', [])
+    other_categories = config.get('other_categories', [])
     leagues = config.get('leagues', {})
 
     league_lookup = _build_league_lookup(leagues)
@@ -404,7 +420,10 @@ def _run_backfill(
             league_cats = meta.get('league_categories', {})
             exempt = _exempt_categories(global_categories, league_cats)
 
-            rows = _download_and_scrape(meta, global_categories, district_map)
+            rows = _download_and_scrape(
+                meta, global_categories, district_map,
+                excluded_keywords, other_categories,
+            )
 
             if not rows:
                 continue

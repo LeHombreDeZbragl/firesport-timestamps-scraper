@@ -412,6 +412,8 @@ def scrape_individual_page(
     district_map: dict,
     source_name: str,
     full_league_name: str = '',
+    excluded_keywords: list[str] | None = None,
+    other_categories: list[str] | None = None,
 ) -> list:
     """Parse an individual competition result page (vysledek-*.html).
 
@@ -426,6 +428,12 @@ def scrape_individual_page(
         district_map:      Mapping of full district names to SPZ codes.
         source_name:       Label for warnings (filename or URL).
         full_league_name:  Full human-readable league name.
+        excluded_keywords: Substrings (matched case-insensitively against the
+                          full category heading) that cause the whole section
+                          to be skipped — used to drop unwanted disciplines
+                          (Plamen, štafeta, 60m, CTIF, …).
+        other_categories:  Category names (matched case-insensitively) that are
+                          collapsed to 'Ostatní' before attack-type resolution.
 
     Returns list of extracted result row dicts (includes 'link' field).
     """
@@ -463,6 +471,8 @@ def scrape_individual_page(
 
     all_rows = []
     known_categories = set(global_categories) | set(league_categories)
+    excluded_lower = [k.lower() for k in (excluded_keywords or [])]
+    other_lower = {c.lower() for c in (other_categories or [])}
 
     # Category sections in the new layout
     cat_h3s = [
@@ -480,7 +490,23 @@ def scrape_individual_page(
 
     for h3, table in zip(cat_h3s, data_tables):
         h3_text = h3.get_text(strip=True)
+
+        # Skip unwanted disciplines: any excluded keyword found in the heading
+        lowered = h3_text.lower()
+        hit = next((kw for kw in excluded_lower if kw in lowered), None)
+        if hit:
+            print(
+                f"Warning: {source_name}: skipping section — heading "
+                f"matched excluded keyword {hit!r}",
+                file=sys.stderr,
+            )
+            continue
+
         category = get_category(h3_text, known_categories)
+
+        # Collapse miscellaneous categories to 'Ostatní' before type resolution
+        if category.lower() in other_lower:
+            category = 'Ostatní'
 
         attack_type = resolve_attack_type(
             category,

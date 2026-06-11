@@ -1,24 +1,43 @@
 {
+  "excluded_keywords": [
+    "plamen",
+    "60",
+    "Děti-mladší",
+    "Děti-starší",
+    "Přípravka",
+    "jednotlivec",
+    "štafeta",
+    "mčr",
+    "ctif",
+    "věž",
+    "kombinace",
+    "starší",
+    "mladší",
+    "střední",
+    "mladí-hasiči",
+    "překážek",
+    "přípravka",
+    "dle pravidel dorost",
+    "celkové"
+  ],
+  "other_categories": [
+    "Ženy>30",
+    "Finále",
+    "Profi",
+    "PS-12",
+    "Volné",
+    "Dospělí",
+    "Smíšené"
+  ],
   "categories": {
     "Muži": "testing",
     "Ženy": "2B",
     "Junioři": "testing",
     "Juniorky": "2B",
     "Muži>35": "2B",
-    "Ženy>30": "2B",
     "Smíšený dorost": "Ostatní",
     "Dorostenci": "testing",
-    "Finále": "Ostatní",
-    "Profi": "Ostatní",
-    "PS-12": "Ostatní",
-    "Děti-mladší": "Ostatní",
-    "Děti-starší": "Ostatní",
-    "Přípravka": "Ostatní",
     "Dorostenky": "Ostatní",
-    "Volné": "Ostatní",
-    "Dospělí": "Ostatní",
-    "Smíšené": "Ostatní",
-    "Mladí-hasiči": "Ostatní",
     "Ostatní": "Ostatní"
   },
   "leagues": {
@@ -101,9 +120,9 @@
     },
     "he": {
       "display_name": "HE",
-      "full_league_name": "Hanácká extraliga",
-      "start_year": 2008,
       "aliases": ["BIOMAC HE"],
+      "full_league_name": "Hanácká extraliga",
+      "start_year": 2008,      
       "categories": {
         "Muži": "auto"
       }
@@ -115,6 +134,7 @@
     },
     "jchl": {
       "display_name": "JCHL",
+      "aliases": ["JČHL"],
       "full_league_name": "Jihočeská hasičská liga",
       "start_year": 2000,
       "categories": {
@@ -201,6 +221,7 @@
     },
     "oshklatovy": {
       "display_name": "OSHK",
+      "aliases": ["PHLKT"],
       "full_league_name": "Plamen okres Klatovy",
       "start_year": 2000,
       "categories": {
@@ -270,6 +291,7 @@
     },
     "shl": {
       "display_name": "SHL",
+      "aliases": ["ŠHL"],
       "full_league_name": "Šumavská hasičská liga",
       "start_year": 2006
     },
@@ -296,11 +318,13 @@
     },
     "vcbl": {
       "display_name": "VCB",
+      "aliases": ["VCBL"],
       "full_league_name": "Velká cena Blanenska v PÚ",
       "start_year": 2002
     },
     "vchl": {
       "display_name": "VCHL",
+      "aliases": ["VČHL"],
       "full_league_name": "Východočeská hasičská liga",
       "start_year": 2013,
       "categories": {
@@ -374,11 +398,17 @@
     },
     "zchl": {
       "display_name": "ZCHL",
+      "aliases": ["ZČHL"],
       "full_league_name": "Západočeská hasičská liga",
       "start_year": 2004,
       "categories": {
         "Muži": "auto"
       }
+    },
+    "znl": {
+      "display_name": "ZNL",
+      "full_league_name": "Znojemská liga",
+      "start_year": 2008
     },
     "zlps": {
       "display_name": "ZLPS",

@@ -54,11 +54,13 @@ Every result row needs an `attack_type`. This is the most intricate part of the 
 
 **League onboarding workflow:** start a new league's varying categories as `"testing"`, run a backfill, resolve any reported conflicts, then promote to `"auto"` or a fixed value once the variation is understood.
 
+**Category filtering (applied per h3 heading, before resolution):** the top-level `excluded_keywords` list holds case-insensitive substrings; if any appears in a category heading, that whole section is skipped with a warning (drops unwanted disciplines — Plamen, štafeta, 60m, CTIF, …). Only the matched section is dropped, not the page. The top-level `other_categories` list holds category names (matched case-insensitively) that are renamed to `"Ostatní"` before resolution, collapsing miscellaneous categories under one value (and thus `attack_type = "Ostatní"`).
+
 **Backfill conflict detection** (`_check_attack_type_conflicts`): if a single category resolves to two different attack types across the league's history (e.g. `Muži` is `3B` one year, `2B` another), the backfill prints a report, **deletes ALL of that league's rows from the DB** (`delete_league_records`), marks the league failed, and continues. Fix the config override, then re-run that league. `"auto"` categories and the `"Ostatní"` type are excluded from this check.
 
 ### config.json
 
-Committed to the repo. Holds `leagues` (~50, each with display name, full name, `start_year`, optional `categories` override, and optional `aliases` list for alternative names that appear in competition data), the global `categories` map, and `district_abbreviations` (full district name → SPZ code, e.g. "Žďár nad Sázavou" → "ZR"). Multi-word category names (e.g. "Smíšený dorost") are matched automatically — the scraper tries the longest prefix of the h3 heading that matches a configured category name.
+Committed to the repo. Holds `leagues` (~50, each with display name, full name, `start_year`, optional `categories` override, and optional `aliases` list for alternative names that appear in competition data), the global `categories` map, `district_abbreviations` (full district name → SPZ code, e.g. "Žďár nad Sázavou" → "ZR"), and the two category-filtering lists `excluded_keywords` and `other_categories` (see attack-type section above). Multi-word category names (e.g. "Smíšený dorost") are matched automatically — the scraper tries the longest prefix of the h3 heading that matches a configured category name.
 
 ### Parsing quirks worth knowing (in `scraper.py`)
 

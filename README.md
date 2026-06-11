@@ -102,6 +102,13 @@ Each result row needs an `attack_type` value (`2B` or `3B`). The scraper resolve
 2. **Global default** from the top-level `categories` map in `config.json`. All entries default to `"auto"`.
 3. Unknown category: a warning is printed and rows are skipped.
 
+#### Category filtering
+
+Two top-level `config.json` lists shape which category sections are kept and how they are labelled, applied per h3 heading before attack-type resolution:
+
+- **`excluded_keywords`** — case-insensitive substrings matched against the *full* category heading. If any is present, that section is skipped entirely (with a warning) so unwanted disciplines (Plamen, štafeta, 60m, CTIF, věž, MČR, …) never reach the DB. Only the matched section is dropped; other categories on the same page are still collected.
+- **`other_categories`** — category names (matched case-insensitively) that are collapsed to `"Ostatní"` before resolution, so several miscellaneous categories (Finále, Profi, PS-12, …) share one `category` value (and resolve to `attack_type = "Ostatní"`).
+
 #### `only_final_time` flag
 
 Some results list only the final time without individual lp/pp splits. When detected, `lp` and `pp` are set to the final time and `only_final_time` is set to `true`.
@@ -281,6 +288,13 @@ The workflow (`.github/workflows/scrape.yml`) runs at **06:00 UTC every day**. I
 
 ```jsonc
 {
+  // Category headings containing any of these substrings (case-insensitive)
+  // are skipped — used to drop unwanted disciplines.
+  "excluded_keywords": ["plamen", "štafeta", "60", "ctif", ...],
+
+  // Category names collapsed to "Ostatní" before attack-type resolution.
+  "other_categories": ["Finále", "Profi", "PS-12", ...],
+
   // Global attack type defaults keyed by category name.
   // Multi-word categories (e.g. "Smíšený dorost") are detected automatically —
   // the scraper matches the longest heading prefix against all configured names.
