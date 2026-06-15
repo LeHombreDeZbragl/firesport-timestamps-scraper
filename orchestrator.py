@@ -215,10 +215,12 @@ def _download_and_scrape(
     district_map: dict,
     excluded_keywords: list[str],
     other_categories: list[str],
-) -> list[dict]:
+) -> list[dict] | None:
     """Download and scrape a single competition page, returning parsed rows.
 
-    Returns empty list on download error.
+    Returns None on download error (caller should not mark the link as visited
+    — it may succeed on a future run).  Returns an empty list when the download
+    succeeded but all sections were excluded or no valid rows were found.
     """
     link = comp_meta.get('link', '')
     league_label = comp_meta.get('league') or 'FSEU'
@@ -231,7 +233,7 @@ def _download_and_scrape(
             f'Download failed for {link}: {exc}',
             'red', stream=sys.stderr,
         )
-        return []
+        return None
 
     return scraper.scrape_individual_page(
         html,
@@ -263,12 +265,21 @@ def _process_competition(
         comp_meta, global_categories, district_map,
         excluded_keywords, other_categories,
     )
+    if rows is None:
+        return []  # download error — don't mark, let future runs retry
+
+    league_label = comp_meta.get('league') or 'FSEU'
     if not rows:
+        db.mark_visited_link(client, comp_meta['link'], int(comp_meta['date'][:4]))
+        cprint(
+            f'  ~ [{league_label} {comp_meta["date"]}] '
+            f'{comp_meta["place"]} (no results after exclusions — saved)',
+            'white',
+        )
         return []
 
     uploaded = db.upload_records(client, rows)
     if uploaded:
-        league_label = comp_meta.get('league') or 'FSEU'
         cprint(
             f'  [{league_label} {comp_meta["date"]}] '
             f'+ {comp_meta["place"]} ({uploaded} rows)',
@@ -471,7 +482,10 @@ def _run_backfill(
                 excluded_keywords, other_categories,
             )
 
+            if rows is None:
+                continue  # download error — retry on next run
             if not rows:
+                db.mark_visited_link(client, meta['link'], year)
                 continue
 
             # Conflict detection (skip for FSEU — no league-level tracking)

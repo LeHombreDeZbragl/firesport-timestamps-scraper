@@ -28,6 +28,7 @@ from supabase import Client, create_client
 from colors import cprint
 
 _TABLE = 'timestamps'
+_TABLE_VISITED = 'visited_competitions'
 # Supabase/PostgREST returns at most this many rows per request; also used as
 # the insert batch size to stay well within API payload limits.
 _PAGE_SIZE = 500
@@ -87,7 +88,48 @@ def get_scraped_links(client: Client, year: int) -> set[str]:
         if len(result.data) < _PAGE_SIZE:
             break
         offset += _PAGE_SIZE
+
+    # Also include competitions that were scraped successfully but produced no
+    # rows (all sections excluded by keywords).  Stored in visited_competitions
+    # so daily runs skip them without re-downloading.
+    try:
+        resp = (
+            client.table(_TABLE_VISITED)
+            .select('link')
+            .eq('year', year)
+            .execute()
+        )
+        for row in (resp.data or []):
+            link = row.get('link', '').strip()
+            if link:
+                links.add(link)
+    except APIError as exc:
+        if exc.code == 'PGRST205':
+            cprint(
+                f'Warning: Table public.{_TABLE_VISITED} not found — '
+                'run the following SQL once to enable empty-link caching:\n'
+                f'  CREATE TABLE IF NOT EXISTS public.{_TABLE_VISITED} '
+                '(link TEXT PRIMARY KEY, year SMALLINT NOT NULL);',
+                'yellow', stream=sys.stderr,
+            )
+        else:
+            raise
+
     return links
+
+
+def mark_visited_link(client: Client, link: str, year: int) -> None:
+    """Record a competition that was downloaded but produced no rows.
+
+    Uses upsert so re-running is safe.  get_scraped_links returns these links,
+    so future daily/backfill runs skip them without re-downloading.
+    Silently skips if the table does not exist yet (PGRST205).
+    """
+    try:
+        client.table(_TABLE_VISITED).upsert({'link': link, 'year': year}).execute()
+    except APIError as exc:
+        if exc.code != 'PGRST205':
+            raise
 
 
 def get_category_attack_types(
