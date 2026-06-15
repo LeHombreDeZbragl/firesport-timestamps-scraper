@@ -134,9 +134,21 @@ def _resolve_competition_meta(comp: dict, league_lookup: dict) -> dict | None:
     cprint(
         f"Warning: Skipping '{comp['place']}' ({comp['date']}): "
         f"unknown league '{league}'",
-        'yellow', stream=sys.stderr,
+        'orange', stream=sys.stderr,
     )
     return None
+
+
+def _matches_target(comp: dict, league_lookup: dict, target_display: str) -> bool:
+    """Return True if a global-list competition belongs to target_display.
+
+    Resolves the raw league name (or alias) to its canonical display name
+    without emitting any warning, so per-league runs can skip non-matching
+    competitions *before* _resolve_competition_meta is called (which would
+    otherwise warn about every other league's unknown competitions).
+    """
+    raw_league = (comp.get('league') or '').strip()
+    return league_lookup.get(raw_league, {}).get('display_name') == target_display
 
 
 # ── Category / conflict helpers ───────────────────────────────────────────────
@@ -274,6 +286,7 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
     district_map = config.get('district_abbreviations', {})
     excluded_keywords = config.get('excluded_keywords', [])
     other_categories = config.get('other_categories', [])
+    blacklisted_leagues = {l.upper() for l in config.get('blacklisted_leagues', [])}
     leagues = config.get('leagues', {})
 
     cprint(f'Fetching global competition list for {year} …', 'blue')
@@ -291,14 +304,6 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
 
     league_lookup = _build_league_lookup(leagues)
 
-    # Filter: not yet scraped and date <= today (results not published for future competitions)
-    new_comps = [
-        c for c in competitions
-        if c['link'] not in scraped_links
-        and c['date'] <= today.isoformat()
-    ]
-    cprint(f'{len(new_comps)} new competition(s) to process.', 'blue')
-
     # Resolve league filter
     target_display: str | None = None
     if only_league:
@@ -307,15 +312,39 @@ def _run_daily(client, config: dict, only_league: str | None = None) -> None:
             sys.exit(1)
         target_display = leagues[only_league]['display_name']
 
+    # Filter to competitions whose results should be published (today or past;
+    # future competitions have no results yet). The --league filter is applied
+    # here, before resolving, so a per-league run doesn't warn about every
+    # unknown competition it would discard. Already-scraped ones get a
+    # light-blue notice and are skipped via link-based deduplication.
+    new_comps = []
+    for c in competitions:
+        raw_league = (c.get('league') or '').strip()
+        if raw_league.upper() in blacklisted_leagues:
+            cprint(
+                f'  ~ [{raw_league} {c["date"]}] {c["place"]} (blacklisted league)',
+                'white',
+            )
+            continue
+        if target_display is not None and not _matches_target(c, league_lookup, target_display):
+            continue
+        if c['date'] > today.isoformat():
+            continue
+        if c['link'] in scraped_links:
+            cprint(
+                f'  = [{c.get("league") or "FSEU"} {c["date"]}] '
+                f'{c["place"]} (already scraped)',
+                'light_blue',
+            )
+            continue
+        new_comps.append(c)
+    cprint(f'{len(new_comps)} new competition(s) to process.', 'blue')
+
     total_uploaded = 0
     for comp in new_comps:
         meta = _resolve_competition_meta(comp, league_lookup)
         if meta is None:
-            continue  # unknown league — warning already printed
-
-        # Apply --league filter (FSEU excluded when filter is active)
-        if target_display is not None and meta.get('league') != target_display:
-            continue
+            continue  # unknown league (unfiltered runs only)
 
         rows = _process_competition(
             client, meta, global_categories, district_map,
@@ -339,6 +368,7 @@ def _run_backfill(
     district_map = config.get('district_abbreviations', {})
     excluded_keywords = config.get('excluded_keywords', [])
     other_categories = config.get('other_categories', [])
+    blacklisted_leagues = {l.upper() for l in config.get('blacklisted_leagues', [])}
     leagues = config.get('leagues', {})
 
     league_lookup = _build_league_lookup(leagues)
@@ -392,15 +422,24 @@ def _run_backfill(
         scraped_links = db.get_scraped_links(client, year)
 
         for comp in competitions:
+            raw_league = (comp.get('league') or '').strip()
+            if raw_league.upper() in blacklisted_leagues:
+                cprint(
+                    f'  ~ [{raw_league} {comp["date"]}] {comp["place"]} (blacklisted league)',
+                    'white',
+                )
+                continue
+
+            # League filter: skip other leagues before resolving, so a per-league
+            # run doesn't warn about every unknown competition it would discard.
+            if target_display is not None and not _matches_target(comp, league_lookup, target_display):
+                continue
+
             meta = _resolve_competition_meta(comp, league_lookup)
             if meta is None:
-                continue  # unknown league
+                continue  # unknown league (unfiltered runs only)
 
             league_display = meta.get('league')  # None for FSEU
-
-            # League filter: skip other leagues (FSEU has league=None, excluded when filter active)
-            if target_display is not None and league_display != target_display:
-                continue
 
             # Respect per-league start_year (skip years before the league existed)
             if league_display is not None and only_year is None:
@@ -416,6 +455,11 @@ def _run_backfill(
 
             # Link-based deduplication
             if meta['link'] in scraped_links:
+                cprint(
+                    f'  = [{league_display or "FSEU"} {meta["date"]}] '
+                    f'{meta["place"]} (already scraped)',
+                    'light_blue',
+                )
                 continue
 
             league_label = league_display or 'FSEU'

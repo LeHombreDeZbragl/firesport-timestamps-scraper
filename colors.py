@@ -22,6 +22,7 @@ _CODES = {
     'cyan': '36',
     'white': '37',
     'orange': '38;5;208',
+    'light_blue': '94',
 }
 
 _RESET = '\x1b[0m'

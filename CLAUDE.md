@@ -36,7 +36,7 @@ Four pipeline modules in a strict one-directional flow (plus a shared `colors.py
 - `scraper.py` — pure HTML→dict parsing, no I/O except config and stderr warnings. No CLI / no `main()`.
 - `db.py` — Supabase client wrapper. All reads paginate at `_PAGE_SIZE` (500); inserts batch at the same size.
 - `orchestrator.py` — wires downloader → scraper → db, owns both run modes.
-- `colors.py` — `cprint(text, color, stream=…)` ANSI helper used by all of the above. Color is emitted only when the target stream is a TTY (auto-detected), unless overridden by `FORCE_COLOR` / disabled by `NO_COLOR`, so redirected output stays plain. Convention: green = uploaded rows, red = errors, orange = no-NxB-pattern warning, yellow = other warnings, white = excluded-keyword section skip, magenta = backfill conflict/delete, blue = progress/info.
+- `colors.py` — `cprint(text, color, stream=…)` ANSI helper used by all of the above. Color is emitted only when the target stream is a TTY (auto-detected), unless overridden by `FORCE_COLOR` / disabled by `NO_COLOR`, so redirected output stays plain. Convention: green = uploaded rows, red = errors, orange = no-NxB-pattern warning, yellow = other warnings, white = excluded-keyword section skip, magenta = backfill conflict/delete, blue = progress/info, light_blue = already-scraped competition skipped (link dedup).
 
 **Two-step scrape:** (1) download one *global list* page per year (`vysledky-souteze-{year}`) → `parse_global_list()` yields one dict per competition (date, place, link, district, league). (2) For each competition, download its individual page (`vysledek-*.html`) → `scrape_individual_page()` yields one dict per result row.
 

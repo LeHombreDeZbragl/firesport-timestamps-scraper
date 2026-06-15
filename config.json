@@ -18,8 +18,10 @@
     "překážek",
     "přípravka",
     "dle pravidel dorost",
+    "dle pravidel výsledek",
     "celkové"
   ],
+  "blacklisted_leagues": ["šh", "čp", "blhps", "smhl", "gmhl", "prol"],
   "other_categories": [
     "Ženy>30",
     "Finále",
@@ -36,8 +38,8 @@
     "Juniorky": "2B",
     "Muži>35": "2B",
     "Smíšený dorost": "Ostatní",
-    "Dorostenci": "testing",
-    "Dorostenky": "Ostatní",
+    "Dorostenci": "auto",
+    "Dorostenky": "2B",
     "Ostatní": "Ostatní"
   },
   "leagues": {
@@ -52,7 +54,10 @@
     "bl": {
       "display_name": "BL",
       "full_league_name": "Brdská liga",
-      "start_year": 2013
+      "start_year": 2013,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "bnl": {
       "display_name": "BNL",
@@ -85,12 +90,18 @@
     "chnhl": {
       "display_name": "CHNHL",
       "full_league_name": "Chodská noční hasičská liga",
-      "start_year": 2017
+      "start_year": 2017,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "excr": {
       "display_name": "EXČR",
       "full_league_name": "Extraliga ČR",
-      "start_year": 1996
+      "start_year": 1996,
+      "categories": {
+        "Muži": "3B"
+      }
     },
     "fnc": {
       "display_name": "FNC",
@@ -111,12 +122,18 @@
     "hbhl": {
       "display_name": "HBHL",
       "full_league_name": "Havlíčkobrodská liga",
-      "start_year": 1999
+      "start_year": 1999,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "hbmh": {
       "display_name": "HBMH",
       "full_league_name": "Havlíčobrodské turné mladých hasičů",
-      "start_year": 2022
+      "start_year": 2022,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "he": {
       "display_name": "HE",
@@ -130,7 +147,10 @@
     "hpl": {
       "display_name": "HPL",
       "full_league_name": "Hasičská pardubická liga",
-      "start_year": 2021
+      "start_year": 2021,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "jchl": {
       "display_name": "JCHL",
@@ -144,7 +164,10 @@
     "jhhl": {
       "display_name": "JHHL",
       "full_league_name": "Jindřichohradecká hasičská liga",
-      "start_year": 2014
+      "start_year": 2014,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "jl": {
       "display_name": "JL",
@@ -157,7 +180,10 @@
     "jlns": {
       "display_name": "JLNS",
       "full_league_name": "Jihovalašská liga nočních soutěží",
-      "start_year": 2013
+      "start_year": 2013,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "jol": {
       "display_name": "JOL",
@@ -178,7 +204,10 @@
     "lpo": {
       "display_name": "LPO",
       "full_league_name": "Liga Pardubického okresu",
-      "start_year": 2015
+      "start_year": 2015,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "mhjpr": {
       "display_name": "MHJPR",
@@ -207,17 +236,26 @@
     "olsy": {
       "display_name": "OLSY",
       "full_league_name": "Okresní liga Svitavska",
-      "start_year": 2019
+      "start_year": 2019,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "onl": {
       "display_name": "ONL",
       "full_league_name": "Olomoucká noční liga",
-      "start_year": 2017
+      "start_year": 2017,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "oph": {
       "display_name": "OPH",
       "full_league_name": "O pohár Hořiny",
-      "start_year": 2007
+      "start_year": 2007,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "oshklatovy": {
       "display_name": "OSHK",
@@ -239,7 +277,10 @@
     "pehl": {
       "display_name": "PEHL",
       "full_league_name": "Pelhřimovská hasičská liga",
-      "start_year": 2009
+      "start_year": 2009,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "phl": {
       "display_name": "PHL",
@@ -252,7 +293,10 @@
     "pkl": {
       "display_name": "PKL",
       "full_league_name": "Podkozákovská hasičská liga",
-      "start_year": 2013
+      "start_year": 2013,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "pl": {
       "display_name": "PL",
@@ -266,7 +310,10 @@
     "plhl": {
       "display_name": "PLHL",
       "full_league_name": "Polabská hasičská liga",
-      "start_year": 2000
+      "start_year": 2000,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "plpu": {
       "display_name": "PLPU",
@@ -287,13 +334,19 @@
     "sh": {
       "display_name": "SH",
       "full_league_name": "Šumavský hasič",
-      "start_year": 2012
+      "start_year": 2012,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "shl": {
       "display_name": "SHL",
       "aliases": ["ŠHL"],
       "full_league_name": "Šumavská hasičská liga",
-      "start_year": 2006
+      "start_year": 2006,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "tcl": {
       "display_name": "TCL",
@@ -314,13 +367,19 @@
     "trl": {
       "display_name": "TRL",
       "full_league_name": "Třebíčská liga",
-      "start_year": 1996
+      "start_year": 1996,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "vcbl": {
       "display_name": "VCB",
       "aliases": ["VCBL"],
       "full_league_name": "Velká cena Blanenska v PÚ",
-      "start_year": 2002
+      "start_year": 2002,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "vchl": {
       "display_name": "VCHL",
@@ -408,14 +467,18 @@
     "znl": {
       "display_name": "ZNL",
       "full_league_name": "Znojemská liga",
-      "start_year": 2008
+      "start_year": 2008,
+      "categories": {
+        "Muži": "auto"
+      }
     },
     "zlps": {
       "display_name": "ZLPS",
       "full_league_name": "Zlínská liga požárního sportu",
       "start_year": 2004,
       "categories": {
-        "Muži": "auto"
+        "Muži": "auto",
+        "Dorostenci": "2B"
       }
     },
     "zl": {
