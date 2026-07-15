@@ -262,11 +262,10 @@ def parse_rows(
             if len(tds) < 6:
                 continue
 
-            # td[0]: placement number inside <b>N.</b>
-            b_tag = tds[0].find('b')
-            if not b_tag:
-                continue
-            placement_raw = b_tag.get_text(strip=True).rstrip('.')
+            # td[0]: placement number. Historically wrapped in <b>N.</b>; the
+            # site now renders it as plain text inside a styled <div> "medal"
+            # circle, so read the cell text directly (works for both layouts).
+            placement_raw = tds[0].get_text(strip=True).rstrip('.')
             if not placement_raw.isdigit():
                 continue  # skip header-like / malformed rows
 
