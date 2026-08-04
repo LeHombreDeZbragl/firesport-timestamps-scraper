@@ -111,6 +111,34 @@ def extract_team(td_team: Tag, td_district: Tag, district_map: dict | None = Non
     return team
 
 
+def find_column_offset(table: Tag) -> int:
+    """Return the index of the placement ('Poř.') column in *table*.
+
+    The result table gained a leading column holding a "Statistiky týmu"
+    icon link, which shifts every data column right by one.  Locating the
+    'Poř.' header keeps both the old (offset 0) and new (offset 1) layouts
+    working.  Falls back to scanning the first body row for a placement-like
+    cell, then to 0.
+    """
+    thead = table.find('thead')
+    if thead:
+        ths = thead.find_all('th')
+        for i, th in enumerate(ths):
+            if th.get_text(strip=True).lower().startswith('poř'):
+                return i
+
+    # No usable header: find the first cell of the first body row that looks
+    # like a placement number ('1.', '12', …).
+    tbody = table.find('tbody')
+    first_tr = tbody.find('tr', recursive=False) if tbody else None
+    if first_tr:
+        for i, td in enumerate(first_tr.find_all('td', recursive=False)):
+            if td.get_text(strip=True).rstrip('.').isdigit():
+                return i
+
+    return 0
+
+
 def get_league_categories(config: dict, league_key: str) -> dict:
     """Return per-league category overrides (may include 'auto' values)."""
     return (
@@ -241,8 +269,10 @@ def parse_rows(
 ) -> list:
     """Extract result rows from a data table element.
 
-    Expects the current column layout: td[0]=placement, td[1]=team,
-    td[2]=district, td[3]=final_time, td[4]=lp, td[5]=pp.
+    Columns are read relative to the placement ('Poř.') column, located by
+    find_column_offset():  +0=placement, +1=team, +2=district, +3=final_time,
+    +4=lp, +5=pp.  The offset absorbs the leading team-statistics column the
+    site added in front of 'Poř.'.
 
     Args:
         table:             Data table element to parse.
@@ -256,33 +286,34 @@ def parse_rows(
         link:              Relative URL of the competition page (e.g., 'vysledek-*.html').
     """
     rows = []
+    base = find_column_offset(table)
     for tbody in table.find_all('tbody'):
         for tr in tbody.find_all('tr', recursive=False):
             tds = tr.find_all('td', recursive=False)
-            if len(tds) < 6:
+            if len(tds) < base + 6:
                 continue
 
-            # td[0]: placement number. Historically wrapped in <b>N.</b>; the
-            # site now renders it as plain text inside a styled <div> "medal"
-            # circle, so read the cell text directly (works for both layouts).
-            placement_raw = tds[0].get_text(strip=True).rstrip('.')
+            # Placement number. Historically wrapped in <b>N.</b>; the site now
+            # renders it as plain text inside a styled <div> "medal" circle, so
+            # read the cell text directly (works for both layouts).
+            placement_raw = tds[base].get_text(strip=True).rstrip('.')
             if not placement_raw.isdigit():
                 continue  # skip header-like / malformed rows
 
-            # td[0]=placement, td[1]=team, td[2]=district, td[3]=final_time, td[4]=lp, td[5]=pp
-            time_idx = 3
-            district_idx = 2
+            team_idx = base + 1
+            district_idx = base + 2
+            time_idx = base + 3
 
-            # td[1]: team name + optional suffix; district cell is at district_idx
-            team = extract_team(tds[1], tds[district_idx], district_map=district_map)
+            # Team name + optional suffix; district cell is at district_idx
+            team = extract_team(tds[team_idx], tds[district_idx], district_map=district_map)
 
             # Final/combined time inside <b> (for only_final_time detection)
             b_final = tds[time_idx].find('b')
             final_time = parse_time(b_final.get_text(strip=True)) if b_final else ''
 
-            # td[4]: first attempt (lp), td[5]: second attempt (pp)
-            lp = parse_time(tds[4].get_text(strip=True))
-            pp = parse_time(tds[5].get_text(strip=True))
+            # First attempt (lp) and second attempt (pp)
+            lp = parse_time(tds[base + 4].get_text(strip=True))
+            pp = parse_time(tds[base + 5].get_text(strip=True))
 
             # When individual times are absent but a final time exists,
             # duplicate the final time into both lp and pp and flag the row.

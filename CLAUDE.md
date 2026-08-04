@@ -65,6 +65,7 @@ Committed to the repo. Holds `leagues` (~50, each with display name, full name, 
 
 ### Parsing quirks worth knowing (in `scraper.py`)
 
+- Result-table columns are **not** at fixed indices. `find_column_offset()` locates the `Poř.` (placement) header in `<thead>` and every other column is read relative to it (`+1` team, `+2` district, `+3` final time, `+4` lp, `+5` pp). The site has twice prepended columns before `Poř.` (most recently a "Statistiky týmu" icon link), which silently zeroed out affected pages while the indices were hardcoded — keep reads offset-relative.
 - Times: comma→dot normalized; `NP`/`DSQ`/`MS`/`-`/`99.99`/non-numeric all become empty.
 - Rows whose `lp`, `pp`, or final time fall outside the plausible `[12, 120]` second range are dropped as implausible (`_MIN_TIME` / `_MAX_TIME` in `scraper.py`).
 - `only_final_time`: when individual splits are absent but a final time exists, both `lp` and `pp` are set to the final time and this flag is set true.
