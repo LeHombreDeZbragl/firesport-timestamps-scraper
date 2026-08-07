@@ -2,8 +2,11 @@ name: Daily scrape
 
 on:
   schedule:
-    # 06:00 UTC every day
-    - cron: '0 6 * * *'
+    # 04:23 UTC = 06:23 Prague (CEST) / 05:23 (CET).  Deliberately off the top
+    # of the hour: GitHub queues scheduled jobs hardest at :00, so an odd minute
+    # actually starts closer to its slot.  The job then sleeps a random 0–120
+    # min before scraping, so the real start drifts across a ~2 h window.
+    - cron: '23 4 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -18,6 +21,10 @@ on:
         description: 'Limit to one league key (e.g. zl, excr) — leave empty for all'
         required: false
         default: ''
+
+env:
+  # Upper bound of the random pre-scrape delay, in minutes (scheduled runs only).
+  MAX_JITTER_MINUTES: 120
 
 jobs:
   scrape:
@@ -35,6 +42,14 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      # Only scheduled runs jitter — a manual dispatch should start immediately.
+      - name: Random delay
+        if: github.event_name == 'schedule'
+        run: |
+          DELAY=$(( RANDOM % (MAX_JITTER_MINUTES * 60) ))
+          echo "Sleeping ${DELAY}s (~$(( DELAY / 60 )) min) before scraping."
+          sleep "$DELAY"
 
       - name: Run orchestrator
         env:
