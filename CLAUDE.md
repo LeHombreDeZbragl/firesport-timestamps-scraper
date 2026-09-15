@@ -65,6 +65,8 @@ Committed to the repo. Holds `leagues` (~50, each with display name, full name, 
 
 ### Parsing quirks worth knowing (in `scraper.py`)
 
+- Category sections are found by **DOM position, not heading text**: each `data-role="table"` inside `<div id='tabs-1'>` is paired with its nearest preceding `<h3>`. Headings once read `"Muži kolo soutěže číslo 1, dle pravidel …"` and now read `"Muži, dle pravidel …"`; the old filter on the literal `"kolo soutěže"` matched nothing and silently produced empty scrapes.
+- `get_category()` reads only the heading's **first comma-separated segment**, then longest-prefix-matches it against configured category names — otherwise the trailing `", dle pravidel …"` boilerplate leaks into the name (`'Muži,'` matches no config entry).
 - Result-table columns are **not** at fixed indices. `find_column_offset()` locates the `Poř.` (placement) header in `<thead>` and every other column is read relative to it (`+1` team, `+2` district, `+3` final time, `+4` lp, `+5` pp). The site has twice prepended columns before `Poř.` (most recently a "Statistiky týmu" icon link), which silently zeroed out affected pages while the indices were hardcoded — keep reads offset-relative.
 - Times: comma→dot normalized; `NP`/`DSQ`/`MS`/`-`/`99.99`/non-numeric all become empty.
 - Rows whose `lp`, `pp`, or final time fall outside the plausible `[12, 120]` second range are dropped as implausible (`_MIN_TIME` / `_MAX_TIME` in `scraper.py`).

@@ -151,10 +151,14 @@ def get_league_categories(config: dict, league_key: str) -> dict:
 def get_category(h3_text: str, known_categories: set[str] | None = None) -> str:
     """Return the category name extracted from the h3 heading.
 
-    Matches the longest prefix of the heading words against *known_categories*.
-    Falls back to the first word when no match is found.
+    The category always occupies the heading's first comma-separated segment
+    ('Muži, dle pravidel FS útok, ...' and the older 'Muži kolo soutěže
+    číslo 1, dle pravidel ...' alike), so only that segment is considered —
+    otherwise the trailing ', dle pravidel ...' boilerplate leaks into the
+    name.  Within it, the longest prefix of words matching *known_categories*
+    wins; falls back to the first word when no match is found.
     """
-    words = h3_text.strip().split()
+    words = h3_text.split(',')[0].strip().split()
     if not words:
         return ''
     if known_categories:
@@ -518,21 +522,33 @@ def scrape_individual_page(
     excluded_lower = [k.lower() for k in (excluded_keywords or [])]
     other_lower = {c.lower() for c in (other_categories or [])}
 
-    # Category sections in the new layout
-    cat_h3s = [
-        h for h in tab_div.find_all('h3')
-        if 'kolo soutěže' in h.get_text()
-    ]
+    # Each result table is introduced by its own <h3>.  Pair them by DOM
+    # position rather than by matching heading text: the headings used to read
+    # 'Muži kolo soutěže číslo 1, dle pravidel ...' and now read plain
+    # 'Muži, dle pravidel ...', and filtering on that wording silently matched
+    # nothing.  Nearest-preceding-h3 holds for both wordings.
+    tab_h3s = set(id(h) for h in tab_div.find_all('h3'))
     data_tables = tab_div.find_all('table', attrs={'data-role': 'table'})
 
-    if len(cat_h3s) != len(data_tables):
-        cprint(
-            f'Warning: {source_name}: {len(cat_h3s)} category headings but '
-            f'{len(data_tables)} data tables — pairing by index.',
-            'yellow', stream=sys.stderr,
-        )
+    seen_h3s = set()
+    for table in data_tables:
+        h3 = table.find_previous('h3')
+        if h3 is None or id(h3) not in tab_h3s:
+            cprint(
+                f'Warning: {source_name}: result table {table.get("id") or "?"!r} '
+                f'has no preceding <h3> heading — skipping section.',
+                'yellow', stream=sys.stderr,
+            )
+            continue
+        if id(h3) in seen_h3s:
+            cprint(
+                f'Warning: {source_name}: result table {table.get("id") or "?"!r} '
+                f'shares a heading with an earlier table — skipping section.',
+                'yellow', stream=sys.stderr,
+            )
+            continue
+        seen_h3s.add(id(h3))
 
-    for h3, table in zip(cat_h3s, data_tables):
         h3_text = h3.get_text(strip=True)
 
         # Skip unwanted disciplines: any excluded keyword found in the heading
